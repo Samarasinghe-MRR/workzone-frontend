@@ -15,8 +15,8 @@ export const useProfile = () => {
 
     try {
       const response = await accountService.getProfile();
-      if (response.success) {
-        setProfile(response.data);
+      if (response.success && "data" in response) {
+        setProfile(response.data ?? null);
       } else {
         setError(response.error || "Failed to fetch profile");
       }
@@ -33,8 +33,8 @@ export const useProfile = () => {
 
     try {
       const response = await accountService.updateProfile(profileData);
-      if (response.success) {
-        setProfile(response.data);
+      if (response.success && "data" in response) {
+        setProfile(response.data ?? null);
         return true;
       } else {
         setError(response.error || "Failed to update profile");

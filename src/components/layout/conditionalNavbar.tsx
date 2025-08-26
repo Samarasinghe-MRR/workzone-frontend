@@ -2,16 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import GuestNavbar from "./guestNavbar";
-import AuthenticatedNavbar from "./authenticatedNavbar";
 
 export default function ConditionalNavbar() {
   const pathname = usePathname();
 
-  // Check if user is on account pages or other authenticated routes
-  const isAuthenticated =
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/my-tasks") ||
-    pathname.startsWith("/book-task");
+  // Show navbar only on homepage, remove from all other pages including dashboard/auth
+  const showNavbar = pathname === "/";
 
-  return isAuthenticated ? <AuthenticatedNavbar /> : <GuestNavbar />;
+  return showNavbar ? <GuestNavbar /> : null;
 }

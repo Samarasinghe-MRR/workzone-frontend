@@ -1,49 +1,34 @@
-// Shared TypeScript types and interfaces
+/**
+ * Main types index - exports all types from modular files
+ * This provides a single entry point for importing types across the application
+ */
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  location?: string;
-  avatar?: string;
-  status?: "Active" | "Inactive" | "Pending";
-  memberSince?: string;
-}
+// Authentication types
+export * from "./auth";
 
-export interface AuthUser extends User {
-  token: string;
-  refreshToken: string;
-}
+// User types
+export * from "./user";
 
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
+// Job types
+export * from "./job";
 
-export interface SignupData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
+// Payment types
+export * from "./payment";
 
-export interface ResetPasswordData {
-  token: string;
-  password: string;
-  confirmPassword: string;
-}
+// Common types
+export * from "./common";
 
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  price: number;
-  status: "pending" | "in-progress" | "completed" | "cancelled";
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
+// Legacy compatibility - these will be moved to appropriate files
+export interface AdminStats {
+  totalUsers: number;
+  totalCustomers: number;
+  totalProviders: number;
+  activeJobs: number;
+  pendingVerifications: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  totalPayments: number;
+  pendingPayments: number;
 }
 
 export interface Service {
@@ -55,37 +40,18 @@ export interface Service {
   imageUrl?: string;
 }
 
-export interface Notification {
+// Legacy Transaction type for backward compatibility
+export interface LegacyTransaction {
   id: string;
-  title: string;
-  message: string;
-  type: "info" | "success" | "warning" | "error";
-  read: boolean;
+  jobId: string;
+  customerId: string;
+  providerId: string;
+  amount: number;
+  commission: number;
+  status: "pending" | "completed" | "failed" | "refunded";
+  paymentMethod: string;
   createdAt: string;
-  userId: string;
-}
-
-export interface PaymentMethod {
-  id: string;
-  type: "Visa" | "Mastercard" | "American Express" | "Discover";
-  last4: string;
-  expiryMonth: number;
-  expiryYear: number;
-  isDefault: boolean;
-}
-
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  success: boolean;
-  error?: string;
-}
-
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  customerName?: string;
+  providerName?: string;
+  jobTitle?: string;
 }
