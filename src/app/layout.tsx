@@ -35,8 +35,6 @@
 
 import "./globals.css";
 import { ConditionalNavbar } from "@/components/layout";
-import { ToastProvider } from "@/components/ui/toast";
-import { Toaster } from 'react-hot-toast';
 
 export default function RootLayout({
   children,
@@ -46,34 +44,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ToastProvider>
-          <ConditionalNavbar />
-          {children}
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#fff',
-                },
-              },
-              error: {
-                duration: 4000,
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
-                },
-              },
-            }}
-          />
-        </ToastProvider>
+        <ConditionalNavbar />
+        {children}
       </body>
     </html>
   );

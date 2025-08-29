@@ -228,7 +228,9 @@ export default function SettingsPage() {
               </button>
             </div>
             <div>
-              <h3 className="text-lg font-medium">{profile?.name || "Loading..."}</h3>
+              <h3 className="text-lg font-medium">
+                {profile?.name || "Loading..."}
+              </h3>
               <p className="text-gray-600">Customer since August 2025</p>
             </div>
           </div>
@@ -271,7 +273,10 @@ export default function SettingsPage() {
                 id="address"
                 value={profileForm.address}
                 onChange={(e) =>
-                  setProfileForm((prev) => ({ ...prev, address: e.target.value }))
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    address: e.target.value,
+                  }))
                 }
               />
             </div>
@@ -307,7 +312,10 @@ export default function SettingsPage() {
               type="password"
               value={passwordForm.currentPassword}
               onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  currentPassword: e.target.value,
+                }))
               }
             />
           </div>
@@ -318,7 +326,10 @@ export default function SettingsPage() {
               type="password"
               value={passwordForm.newPassword}
               onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  newPassword: e.target.value,
+                }))
               }
             />
           </div>
@@ -329,7 +340,10 @@ export default function SettingsPage() {
               type="password"
               value={passwordForm.confirmPassword}
               onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  confirmPassword: e.target.value,
+                }))
               }
             />
           </div>

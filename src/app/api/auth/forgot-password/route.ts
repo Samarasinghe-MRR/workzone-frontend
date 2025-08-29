@@ -18,11 +18,14 @@ export async function POST(request: Request) {
 
     try {
       // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      const backendResponse = await fetch(
+        "http://localhost:4000/auth/forgot-password",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
 
       const data = await backendResponse.json();
       console.log("Backend forgot password response:", data);
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Fallback response when backend is unavailable
       return NextResponse.json({
         success: true,

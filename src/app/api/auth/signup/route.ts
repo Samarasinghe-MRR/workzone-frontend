@@ -6,7 +6,16 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log("Signup request received:", body);
-    console.log("Individual fields - name:", body.name, "email:", body.email, "password:", !!body.password, "role:", body.role);
+    console.log(
+      "Individual fields - name:",
+      body.name,
+      "email:",
+      body.email,
+      "password:",
+      !!body.password,
+      "role:",
+      body.role
+    );
 
     // Validate required fields
     const { name, email, password, role, phone } = body;

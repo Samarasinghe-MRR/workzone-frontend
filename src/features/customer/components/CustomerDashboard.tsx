@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
   Briefcase,
   Plus,
@@ -18,14 +17,10 @@ import {
   Users,
   CreditCard,
   Bell,
-  Settings,
 } from "lucide-react";
 import Link from "next/link";
 
 export function CustomerDashboard() {
-  // Get real user data
-  const { user, isLoading } = useAuth();
-
   // Mock data - replace with actual API calls
   const currentJobs = [
     {
@@ -76,40 +71,21 @@ export function CustomerDashboard() {
     savedProviders: 8,
   };
 
-  // Show loading state while fetching user data
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-500"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {user?.name || 'Customer'}!
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
           <p className="text-gray-600 mt-1">
             Here&apos;s what&apos;s happening with your jobs today.
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button asChild variant="outline">
-            <Link href="/dashboard/customer/settings">
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/dashboard/customer/post-job">
-              <Plus className="mr-2 h-4 w-4" />
-              Post a Job
-            </Link>
-          </Button>
-        </div>
+        <Button asChild>
+          <Link href="/dashboard/customer/post-job">
+            <Plus className="mr-2 h-4 w-4" />
+            Post a Job
+          </Link>
+        </Button>
       </div>
 
       {/* Stats Overview */}

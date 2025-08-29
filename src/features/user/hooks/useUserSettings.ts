@@ -38,14 +38,18 @@ interface UseUserSettingsReturn {
   loading: boolean;
   saving: boolean;
   error: string | null;
-  
+
   // Actions
   fetchUserSettings: () => Promise<void>;
   updateTheme: (theme: UserSettings["theme"]) => Promise<boolean>;
   updateLanguage: (language: string) => Promise<boolean>;
-  updateNotificationSettings: (notifications: UserSettings["notifications"]) => Promise<boolean>;
+  updateNotificationSettings: (
+    notifications: UserSettings["notifications"]
+  ) => Promise<boolean>;
   updatePrivacySettings: (privacy: UserSettings["privacy"]) => Promise<boolean>;
-  updatePreferences: (preferences: UserSettings["preferences"]) => Promise<boolean>;
+  updatePreferences: (
+    preferences: UserSettings["preferences"]
+  ) => Promise<boolean>;
   resetSettingsToDefault: () => Promise<boolean>;
   exportSettings: () => UserSettings | null;
   importSettings: (settings: UserSettings) => Promise<boolean>;
@@ -108,7 +112,8 @@ export const useUserSettings = (): UseUserSettingsReturn => {
         setSettings(defaultSettings);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch user settings";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch user settings";
       setError(errorMessage);
       console.error("Error fetching user settings:", err);
     } finally {
@@ -117,129 +122,153 @@ export const useUserSettings = (): UseUserSettingsReturn => {
   }, []);
 
   // Update theme setting
-  const updateTheme = useCallback(async (theme: UserSettings["theme"]): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const updateTheme = useCallback(
+    async (theme: UserSettings["theme"]): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      // Update local state
-      setSettings(prev => prev ? { ...prev, theme } : null);
-      
-      // Save to localStorage (in real app, save to backend)
-      if (settings) {
-        const updatedSettings = { ...settings, theme };
-        localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        // Update local state
+        setSettings((prev) => (prev ? { ...prev, theme } : null));
+
+        // Save to localStorage (in real app, save to backend)
+        if (settings) {
+          const updatedSettings = { ...settings, theme };
+          localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        }
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to update theme";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update theme";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [settings]);
+    },
+    [settings]
+  );
 
   // Update language setting
-  const updateLanguage = useCallback(async (language: string): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const updateLanguage = useCallback(
+    async (language: string): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      // Update local state
-      setSettings(prev => prev ? { ...prev, language } : null);
-      
-      // Save to localStorage (in real app, save to backend)
-      if (settings) {
-        const updatedSettings = { ...settings, language };
-        localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        // Update local state
+        setSettings((prev) => (prev ? { ...prev, language } : null));
+
+        // Save to localStorage (in real app, save to backend)
+        if (settings) {
+          const updatedSettings = { ...settings, language };
+          localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        }
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to update language";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update language";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [settings]);
+    },
+    [settings]
+  );
 
   // Update notification settings
-  const updateNotificationSettings = useCallback(async (notifications: UserSettings["notifications"]): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const updateNotificationSettings = useCallback(
+    async (notifications: UserSettings["notifications"]): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      // Update local state
-      setSettings(prev => prev ? { ...prev, notifications } : null);
-      
-      // Save to localStorage (in real app, save to backend)
-      if (settings) {
-        const updatedSettings = { ...settings, notifications };
-        localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        // Update local state
+        setSettings((prev) => (prev ? { ...prev, notifications } : null));
+
+        // Save to localStorage (in real app, save to backend)
+        if (settings) {
+          const updatedSettings = { ...settings, notifications };
+          localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        }
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to update notification settings";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update notification settings";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [settings]);
+    },
+    [settings]
+  );
 
   // Update privacy settings
-  const updatePrivacySettings = useCallback(async (privacy: UserSettings["privacy"]): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const updatePrivacySettings = useCallback(
+    async (privacy: UserSettings["privacy"]): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      // Update local state
-      setSettings(prev => prev ? { ...prev, privacy } : null);
-      
-      // Save to localStorage (in real app, save to backend)
-      if (settings) {
-        const updatedSettings = { ...settings, privacy };
-        localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        // Update local state
+        setSettings((prev) => (prev ? { ...prev, privacy } : null));
+
+        // Save to localStorage (in real app, save to backend)
+        if (settings) {
+          const updatedSettings = { ...settings, privacy };
+          localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        }
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to update privacy settings";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update privacy settings";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [settings]);
+    },
+    [settings]
+  );
 
   // Update user preferences
-  const updatePreferences = useCallback(async (preferences: UserSettings["preferences"]): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const updatePreferences = useCallback(
+    async (preferences: UserSettings["preferences"]): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      // Update local state
-      setSettings(prev => prev ? { ...prev, preferences } : null);
-      
-      // Save to localStorage (in real app, save to backend)
-      if (settings) {
-        const updatedSettings = { ...settings, preferences };
-        localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        // Update local state
+        setSettings((prev) => (prev ? { ...prev, preferences } : null));
+
+        // Save to localStorage (in real app, save to backend)
+        if (settings) {
+          const updatedSettings = { ...settings, preferences };
+          localStorage.setItem("userSettings", JSON.stringify(updatedSettings));
+        }
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to update preferences";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update preferences";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [settings]);
+    },
+    [settings]
+  );
 
   // Reset settings to default
   const resetSettingsToDefault = useCallback(async (): Promise<boolean> => {
@@ -253,7 +282,8 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 
       return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to reset settings";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to reset settings";
       setError(errorMessage);
       return false;
     } finally {
@@ -267,25 +297,29 @@ export const useUserSettings = (): UseUserSettingsReturn => {
   }, [settings]);
 
   // Import settings from backup
-  const importSettings = useCallback(async (importedSettings: UserSettings): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const importSettings = useCallback(
+    async (importedSettings: UserSettings): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      // Validate and merge with default settings
-      const validatedSettings = { ...defaultSettings, ...importedSettings };
-      setSettings(validatedSettings);
-      localStorage.setItem("userSettings", JSON.stringify(validatedSettings));
+        // Validate and merge with default settings
+        const validatedSettings = { ...defaultSettings, ...importedSettings };
+        setSettings(validatedSettings);
+        localStorage.setItem("userSettings", JSON.stringify(validatedSettings));
 
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to import settings";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to import settings";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    []
+  );
 
   // Initialize settings on mount
   useEffect(() => {
@@ -298,7 +332,7 @@ export const useUserSettings = (): UseUserSettingsReturn => {
     loading,
     saving,
     error,
-    
+
     // Actions
     fetchUserSettings,
     updateTheme,

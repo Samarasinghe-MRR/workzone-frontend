@@ -40,21 +40,23 @@ export default function LoginForm() {
       const response = await authService.login(data);
 
       if (response.success && response.data) {
-        // Redirect based on user role
+        // Redirect based on user role using dynamic routes
         const userRole = response.data.role;
+        const userId = response.data.id;
 
         switch (userRole) {
           case "admin":
-            router.push("/dashboard/admin");
+            router.push(`/dashboard/admin/${userId}`);
             break;
           case "customer":
-            router.push("/dashboard/customer");
+            router.push(`/dashboard/customer/${userId}`);
             break;
           case "provider":
-            router.push("/dashboard/provider");
+            router.push(`/dashboard/provider/${userId}`);
             break;
           default:
-            router.push("/dashboard/customer"); // Default fallback
+            // Fallback to static route
+            router.push("/dashboard/customer");
         }
       }
     } catch (error) {

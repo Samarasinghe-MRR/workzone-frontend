@@ -48,24 +48,19 @@ export const newsletterSchema = z.object({
     .min(2, "First name must be at least 2 characters")
     .max(50, "First name must not exceed 50 characters")
     .optional(),
-  interests: z
-    .array(z.string())
-    .optional(),
+  interests: z.array(z.string()).optional(),
 });
 
 // Service Request Schema - for quick service booking from home page
 export const serviceRequestSchema = z.object({
-  serviceType: z
-    .string()
-    .min(1, "Please select a service type"),
+  serviceType: z.string().min(1, "Please select a service type"),
   location: z
     .string()
     .min(5, "Please enter your location")
     .max(200, "Location must not exceed 200 characters"),
-  urgency: z
-    .enum(["low", "medium", "high", "urgent"], {
-      required_error: "Please select urgency level",
-    }),
+  urgency: z.enum(["low", "medium", "high", "urgent"], {
+    required_error: "Please select urgency level",
+  }),
   description: z
     .string()
     .min(10, "Please provide more details about your request")
@@ -92,12 +87,8 @@ export const serviceRequestSchema = z.object({
       .string()
       .min(2, "Name must be at least 2 characters")
       .max(100, "Name must not exceed 100 characters"),
-    email: z
-      .string()
-      .email("Please enter a valid email address"),
-    phone: z
-      .string()
-      .min(10, "Please enter a valid phone number"),
+    email: z.string().email("Please enter a valid email address"),
+    phone: z.string().min(10, "Please enter a valid phone number"),
   }),
 });
 
@@ -112,9 +103,7 @@ export const searchFormSchema = z.object({
     .min(2, "Location must be at least 2 characters")
     .max(100, "Location must not exceed 100 characters")
     .optional(),
-  category: z
-    .string()
-    .optional(),
+  category: z.string().optional(),
   priceRange: z
     .object({
       min: z.number().min(0).optional(),
@@ -138,35 +127,29 @@ export const feedbackSchema = z.object({
     .string()
     .min(10, "Feedback must be at least 10 characters")
     .max(500, "Feedback must not exceed 500 characters"),
-  category: z
-    .enum(["website", "service", "support", "other"], {
-      required_error: "Please select a feedback category",
-    }),
+  category: z.enum(["website", "service", "support", "other"], {
+    required_error: "Please select a feedback category",
+  }),
   name: z
     .string()
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must not exceed 100 characters")
     .optional(),
-  email: z
-    .string()
-    .email("Please enter a valid email address")
-    .optional(),
+  email: z.string().email("Please enter a valid email address").optional(),
   anonymous: z.boolean().default(false),
 });
 
 // Get Started Form Schema - for initial user onboarding
 export const getStartedSchema = z.object({
-  userType: z
-    .enum(["customer", "provider"], {
-      required_error: "Please select whether you want to book services or provide services",
-    }),
+  userType: z.enum(["customer", "provider"], {
+    required_error:
+      "Please select whether you want to book services or provide services",
+  }),
   name: z
     .string()
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must not exceed 100 characters"),
-  email: z
-    .string()
-    .email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address"),
   location: z
     .string()
     .min(2, "Location must be at least 2 characters")

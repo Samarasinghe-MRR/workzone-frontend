@@ -36,7 +36,7 @@ interface UseSettingsDataReturn {
   loading: boolean;
   saving: boolean;
   error: string | null;
-  
+
   // Actions
   fetchUserData: () => Promise<void>;
   updateProfile: (data: ProfileSettingsFormData) => Promise<boolean>;
@@ -61,14 +61,15 @@ export const useSettingsData = (): UseSettingsDataReturn => {
       setError(null);
 
       const response = await userService.getProfile();
-      
+
       if (response.success && response.data) {
         setUser(response.data);
       } else {
         throw new Error("Failed to fetch user data");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch user data";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch user data";
       setError(errorMessage);
       console.error("Error fetching user data:", err);
     } finally {
@@ -77,62 +78,70 @@ export const useSettingsData = (): UseSettingsDataReturn => {
   }, []);
 
   // Update profile settings
-  const updateProfile = useCallback(async (data: ProfileSettingsFormData): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const updateProfile = useCallback(
+    async (data: ProfileSettingsFormData): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      // Convert form data to User partial, matching the User interface
-      const profileData: Partial<User> = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        location: data.location,
-        // Note: avatar file upload would need separate handling
-      };
+        // Convert form data to User partial, matching the User interface
+        const profileData: Partial<User> = {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          location: data.location,
+          // Note: avatar file upload would need separate handling
+        };
 
-      const response = await userService.updateProfile(profileData);
-      
-      if (response.success) {
-        // Refresh user data to get updated profile
-        await fetchUserData();
-        return true;
-      } else {
-        throw new Error("Failed to update profile");
+        const response = await userService.updateProfile(profileData);
+
+        if (response.success) {
+          // Refresh user data to get updated profile
+          await fetchUserData();
+          return true;
+        } else {
+          throw new Error("Failed to update profile");
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to update profile";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update profile";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [fetchUserData]);
+    },
+    [fetchUserData]
+  );
 
   // Change password
-  const changePassword = useCallback(async (data: SecuritySettingsFormData): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const changePassword = useCallback(
+    async (data: SecuritySettingsFormData): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      const response = await authPasswordService.changePassword({
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
-      });
-      
-      if (response.success) {
-        return true;
-      } else {
-        throw new Error("Failed to change password");
+        const response = await authPasswordService.changePassword({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        });
+
+        if (response.success) {
+          return true;
+        } else {
+          throw new Error("Failed to change password");
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to change password";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to change password";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   // Update notification settings
   const updateNotifications = useCallback(async (): Promise<boolean> => {
@@ -141,11 +150,14 @@ export const useSettingsData = (): UseSettingsDataReturn => {
       setError(null);
 
       // For now, just simulate success - implement actual notification API later
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update notification settings";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to update notification settings";
       setError(errorMessage);
       return false;
     } finally {
@@ -160,11 +172,14 @@ export const useSettingsData = (): UseSettingsDataReturn => {
       setError(null);
 
       // For now, just simulate success - implement actual privacy API later
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update privacy settings";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to update privacy settings";
       setError(errorMessage);
       return false;
     } finally {
@@ -173,34 +188,40 @@ export const useSettingsData = (): UseSettingsDataReturn => {
   }, []);
 
   // Update service provider-specific settings
-  const updateProviderSettings = useCallback(async (data: ProviderSettingsFormData): Promise<boolean> => {
-    try {
-      setSaving(true);
-      setError(null);
+  const updateProviderSettings = useCallback(
+    async (data: ProviderSettingsFormData): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      const response = await userService.updateServiceProviderProfile({
-        category: data.category || "",
-        location: data.location || user?.location || "",
-        experienceYears: data.experienceYears || 0,
-        latitude: data.latitude || 0,
-        longitude: data.longitude || 0,
-      });
-      
-      if (response.success) {
-        // Refresh user data to get updated profile
-        await fetchUserData();
-        return true;
-      } else {
-        throw new Error("Failed to update provider settings");
+        const response = await userService.updateServiceProviderProfile({
+          category: data.category || "",
+          location: data.location || user?.location || "",
+          experienceYears: data.experienceYears || 0,
+          latitude: data.latitude || 0,
+          longitude: data.longitude || 0,
+        });
+
+        if (response.success) {
+          // Refresh user data to get updated profile
+          await fetchUserData();
+          return true;
+        } else {
+          throw new Error("Failed to update provider settings");
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to update provider settings";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update provider settings";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [user, fetchUserData]);
+    },
+    [user, fetchUserData]
+  );
 
   // Update customer-specific settings
   const updateCustomerSettings = useCallback(async (): Promise<boolean> => {
@@ -211,7 +232,7 @@ export const useSettingsData = (): UseSettingsDataReturn => {
       const response = await userService.updateCustomerProfile({
         address: user?.location || "",
       });
-      
+
       if (response.success) {
         // Refresh user data to get updated profile
         await fetchUserData();
@@ -220,7 +241,10 @@ export const useSettingsData = (): UseSettingsDataReturn => {
         throw new Error("Failed to update customer settings");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update customer settings";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to update customer settings";
       setError(errorMessage);
       return false;
     } finally {
@@ -243,7 +267,7 @@ export const useSettingsData = (): UseSettingsDataReturn => {
     loading,
     saving,
     error,
-    
+
     // Actions
     fetchUserData,
     updateProfile,

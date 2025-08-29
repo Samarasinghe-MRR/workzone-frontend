@@ -18,11 +18,14 @@ export async function POST(request: Request) {
 
     try {
       // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+      const backendResponse = await fetch(
+        "http://localhost:4000/auth/verify-email",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        }
+      );
 
       const data = await backendResponse.json();
       console.log("Backend email verification response:", data);
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Fallback response when backend is unavailable
       return NextResponse.json({
         success: true,

@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface TabsContextValue {
-  value?: string
-  onValueChange?: (value: string) => void
+  value?: string;
+  onValueChange?: (value: string) => void;
 }
 
-const TabsContext = React.createContext<TabsContextValue>({})
+const TabsContext = React.createContext<TabsContextValue>({});
 
 function Tabs({
   value,
@@ -17,10 +17,10 @@ function Tabs({
   children,
   ...props
 }: {
-  value?: string
-  onValueChange?: (value: string) => void
-  className?: string
-  children: React.ReactNode
+  value?: string;
+  onValueChange?: (value: string) => void;
+  className?: string;
+  children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <TabsContext.Provider value={{ value, onValueChange }}>
@@ -28,7 +28,7 @@ function Tabs({
         {children}
       </div>
     </TabsContext.Provider>
-  )
+  );
 }
 
 function TabsList({
@@ -36,8 +36,8 @@ function TabsList({
   children,
   ...props
 }: {
-  className?: string
-  children: React.ReactNode
+  className?: string;
+  children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
@@ -49,7 +49,7 @@ function TabsList({
     >
       {children}
     </div>
-  )
+  );
 }
 
 function TabsTrigger({
@@ -58,16 +58,16 @@ function TabsTrigger({
   children,
   ...props
 }: {
-  value: string
-  className?: string
-  children: React.ReactNode
+  value: string;
+  className?: string;
+  children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const context = React.useContext(TabsContext)
-  const isActive = context.value === value
+  const context = React.useContext(TabsContext);
+  const isActive = context.value === value;
 
   const handleClick = () => {
-    context.onValueChange?.(value)
-  }
+    context.onValueChange?.(value);
+  };
 
   return (
     <button
@@ -81,7 +81,7 @@ function TabsTrigger({
     >
       {children}
     </button>
-  )
+  );
 }
 
 function TabsContent({
@@ -90,15 +90,15 @@ function TabsContent({
   children,
   ...props
 }: {
-  value: string
-  className?: string
-  children: React.ReactNode
+  value: string;
+  className?: string;
+  children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
-  const context = React.useContext(TabsContext)
-  const isActive = context.value === value
+  const context = React.useContext(TabsContext);
+  const isActive = context.value === value;
 
   if (!isActive) {
-    return null
+    return null;
   }
 
   return (
@@ -111,7 +111,7 @@ function TabsContent({
     >
       {children}
     </div>
-  )
+  );
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+export { Tabs, TabsList, TabsTrigger, TabsContent };

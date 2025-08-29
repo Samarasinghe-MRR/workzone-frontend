@@ -39,10 +39,10 @@ export default function AuthenticatedNavbar() {
               My Tasks
             </Link>
             <Link
-              href="/account"
+              href="/dashboard"
               className="text-gray-700 hover:text-emerald-600 font-medium"
             >
-              Account
+              Dashboard
             </Link>
           </div>
         </div>

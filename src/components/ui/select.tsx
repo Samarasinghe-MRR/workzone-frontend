@@ -1,39 +1,37 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { ChevronDown } from "lucide-react"
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 interface SelectContextValue {
-  value?: string
-  onValueChange?: (value: string) => void
-  open: boolean
-  setOpen: (open: boolean) => void
+  value?: string;
+  onValueChange?: (value: string) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 const SelectContext = React.createContext<SelectContextValue>({
   open: false,
   setOpen: () => {},
-})
+});
 
 function Select({
   value,
   onValueChange,
   children,
 }: {
-  value?: string
-  onValueChange?: (value: string) => void
-  children: React.ReactNode
+  value?: string;
+  onValueChange?: (value: string) => void;
+  children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
   return (
     <SelectContext.Provider value={{ value, onValueChange, open, setOpen }}>
-      <div className="relative">
-        {children}
-      </div>
+      <div className="relative">{children}</div>
     </SelectContext.Provider>
-  )
+  );
 }
 
 function SelectTrigger({
@@ -41,14 +39,14 @@ function SelectTrigger({
   children,
   ...props
 }: {
-  className?: string
-  children: React.ReactNode
+  className?: string;
+  children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const context = React.useContext(SelectContext)
+  const context = React.useContext(SelectContext);
 
   const handleClick = () => {
-    context.setOpen(!context.open)
-  }
+    context.setOpen(!context.open);
+  };
 
   return (
     <button
@@ -62,23 +60,21 @@ function SelectTrigger({
       {children}
       <ChevronDown className="h-4 w-4 opacity-50" />
     </button>
-  )
+  );
 }
 
 function SelectValue({
   placeholder,
   className,
 }: {
-  placeholder?: string
-  className?: string
+  placeholder?: string;
+  className?: string;
 }) {
-  const context = React.useContext(SelectContext)
+  const context = React.useContext(SelectContext);
 
   return (
-    <span className={cn("", className)}>
-      {context.value || placeholder}
-    </span>
-  )
+    <span className={cn("", className)}>{context.value || placeholder}</span>
+  );
 }
 
 function SelectContent({
@@ -86,13 +82,13 @@ function SelectContent({
   children,
   ...props
 }: {
-  className?: string
-  children: React.ReactNode
+  className?: string;
+  children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
-  const context = React.useContext(SelectContext)
+  const context = React.useContext(SelectContext);
 
   if (!context.open) {
-    return null
+    return null;
   }
 
   return (
@@ -105,7 +101,7 @@ function SelectContent({
     >
       {children}
     </div>
-  )
+  );
 }
 
 function SelectItem({
@@ -114,16 +110,16 @@ function SelectItem({
   children,
   ...props
 }: {
-  value: string
-  className?: string
-  children: React.ReactNode
+  value: string;
+  className?: string;
+  children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
-  const context = React.useContext(SelectContext)
+  const context = React.useContext(SelectContext);
 
   const handleClick = () => {
-    context.onValueChange?.(value)
-    context.setOpen(false)
-  }
+    context.onValueChange?.(value);
+    context.setOpen(false);
+  };
 
   return (
     <div
@@ -136,7 +132,7 @@ function SelectItem({
     >
       {children}
     </div>
-  )
+  );
 }
 
-export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem }
+export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem };

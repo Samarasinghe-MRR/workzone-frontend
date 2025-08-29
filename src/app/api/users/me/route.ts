@@ -22,9 +22,9 @@ export async function GET(request: Request) {
       // Forward the request to your NestJS backend
       const backendResponse = await fetch("http://localhost:4000/users/me", {
         method: "GET",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Fallback demo profile when backend is unavailable
       const demoProfile = {
         id: "demo_user",
@@ -102,9 +102,9 @@ export async function PATCH(request: Request) {
       // Forward the request to your NestJS backend
       const backendResponse = await fetch("http://localhost:4000/users/me", {
         method: "PATCH",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(profileData),
       });
@@ -129,7 +129,7 @@ export async function PATCH(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Fallback response when backend is unavailable
       return NextResponse.json({
         success: true,

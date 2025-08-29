@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { id } from "zod/v4/locales";
 
 export async function GET(request: Request) {
   try {
@@ -20,11 +21,11 @@ export async function GET(request: Request) {
 
     try {
       // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/auth/me", {
+      const backendResponse = await fetch(`http://localhost:3001/users/${id}`, {
         method: "GET",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -36,7 +37,9 @@ export async function GET(request: Request) {
         const userData = {
           id: data.id,
           email: data.email,
-          name: data.firstName ? `${data.firstName} ${data.lastName}`.trim() : data.email.split("@")[0],
+          name: data.firstName
+            ? `${data.firstName} ${data.lastName}`.trim()
+            : data.email.split("@")[0],
           role: data.role, // Already mapped in backend response
           phone: data.phone || "",
           location: data.location || "",
@@ -62,7 +65,7 @@ export async function GET(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Return error for protected route
       return NextResponse.json(
         {

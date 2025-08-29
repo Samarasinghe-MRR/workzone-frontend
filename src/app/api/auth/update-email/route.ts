@@ -32,14 +32,17 @@ export async function PATCH(request: Request) {
 
     try {
       // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/auth/update-email", {
-        method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ email }),
-      });
+      const backendResponse = await fetch(
+        "http://localhost:4000/auth/update-email",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
 
       const data = await backendResponse.json();
       console.log("Backend update email response:", data);
@@ -61,7 +64,7 @@ export async function PATCH(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Fallback response when backend is unavailable
       return NextResponse.json({
         success: true,

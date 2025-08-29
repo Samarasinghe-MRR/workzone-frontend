@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Camera,
   MapPin,
@@ -17,135 +17,134 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { useProviderProfile } from "@/features/provider/hooks/useProviderProfile";
-import type {
-  Service,
-  Certification,
-} from "@/features/provider/hooks/useProviderProfile";
+
+interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  date: string;
+  expiryDate?: string;
+}
+
+interface Service {
+  id: string;
+  category: string;
+  subcategory: string;
+  hourlyRate: string;
+}
 
 export default function ProfilePage() {
-  const {
-    profileData,
-    loading,
-    error,
-    updateBasicProfile,
-    addService,
-    updateService,
-    removeService,
-    addCertification,
-    updateCertification,
-    removeCertification,
-  } = useProviderProfile();
-
   const [isEditing, setIsEditing] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Form state for basic profile
-  const [profileForm, setProfileForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    bio: "",
-    yearsExperience: 0,
-    serviceRadius: 0,
+  const [profile, setProfile] = useState({
+    name: "Alex Johnson",
+    email: "alex.johnson@example.com",
+    phone: "+1 (555) 123-4567",
+    bio: "Experienced electrician with 10+ years in residential and commercial installations. Licensed and insured professional committed to quality work.",
+    yearsExperience: "10",
+    serviceRadius: "25",
     pricingModel: "hourly",
   });
 
-  // Update form when profile data loads
-  useEffect(() => {
-    if (profileData) {
-      setProfileForm({
-        name: profileData.user.name || "",
-        email: profileData.user.email || "",
-        phone: profileData.user.phone || "",
-        bio: profileData.bio || "",
-        yearsExperience: profileData.yearsExperience || 0,
-        serviceRadius: profileData.serviceRadius || 0,
-        pricingModel: profileData.pricingModel || "hourly",
-      });
-    }
-  }, [profileData]);
+  const [services, setServices] = useState<Service[]>([
+    {
+      id: "1",
+      category: "Electrical",
+      subcategory: "Installation",
+      hourlyRate: "$85",
+    },
+    {
+      id: "2",
+      category: "Electrical",
+      subcategory: "Repair",
+      hourlyRate: "$75",
+    },
+    {
+      id: "3",
+      category: "Electrical",
+      subcategory: "Maintenance",
+      hourlyRate: "$70",
+    },
+  ]);
+
+  const [certifications, setCertifications] = useState<Certification[]>([
+    {
+      id: "1",
+      name: "Licensed Electrician",
+      issuer: "State Board",
+      date: "2015-03-15",
+      expiryDate: "2026-03-15",
+    },
+    {
+      id: "2",
+      name: "OSHA Safety Certified",
+      issuer: "OSHA",
+      date: "2023-06-10",
+      expiryDate: "2026-06-10",
+    },
+  ]);
+
   const handleSaveProfile = async () => {
-    setSaveLoading(true);
+    setLoading(true);
     try {
-      const success = await updateBasicProfile(profileForm);
-      if (success) {
-        setIsEditing(false);
-      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Profile updated:", profile);
+      setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
     } finally {
-      setSaveLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleAddService = () => {
-    const newService: Omit<Service, "id"> = {
+  const addService = () => {
+    const newService: Service = {
+      id: Date.now().toString(),
       category: "",
       subcategory: "",
       hourlyRate: "",
     };
-    addService(newService);
+    setServices([...services, newService]);
   };
 
-  const handleRemoveService = (id: string) => {
-    removeService(id);
+  const removeService = (id: string) => {
+    setServices(services.filter((service) => service.id !== id));
   };
 
-  const handleUpdateService = (
-    id: string,
-    field: keyof Service,
-    value: string
-  ) => {
-    updateService(id, { [field]: value });
+  const updateService = (id: string, field: keyof Service, value: string) => {
+    setServices(
+      services.map((service) =>
+        service.id === id ? { ...service, [field]: value } : service
+      )
+    );
   };
 
-  const handleAddCertification = () => {
-    const newCert: Omit<Certification, "id"> = {
+  const addCertification = () => {
+    const newCert: Certification = {
+      id: Date.now().toString(),
       name: "",
       issuer: "",
       date: "",
     };
-    addCertification(newCert);
+    setCertifications([...certifications, newCert]);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleRemoveCertification = (id: string) => {
-    removeCertification(id);
+  const removeCertification = (id: string) => {
+    setCertifications(certifications.filter((cert) => cert.id !== id));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleUpdateCertification = (
+  const updateCertification = (
     id: string,
     field: keyof Certification,
     value: string
   ) => {
-    updateCertification(id, field, value, { [field]: value });
+    setCertifications(
+      certifications.map((cert) =>
+        cert.id === id ? { ...cert, [field]: value } : cert
+      )
+    );
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading profile...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">Error: {error}</div>
-      </div>
-    );
-  }
-
-  if (!profileData) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">No profile data found</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -157,16 +156,16 @@ export default function ProfilePage() {
               <Button
                 variant="outline"
                 onClick={() => setIsEditing(false)}
-                disabled={saveLoading}
+                disabled={loading}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSaveProfile}
-                disabled={saveLoading}
+                disabled={loading}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                {saveLoading ? "Saving..." : "Save Changes"}
+                {loading ? "Saving..." : "Save Changes"}
               </Button>
             </>
           ) : (
@@ -191,9 +190,9 @@ export default function ProfilePage() {
               <div className="flex items-center space-x-6">
                 <div className="relative">
                   <div className="w-24 h-24 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-bold">
-                    {profileData.user.name
+                    {profile.name
                       .split(" ")
-                      .map((n: string) => n[0])
+                      .map((n) => n[0])
                       .join("")}
                   </div>
                   {isEditing && (
@@ -209,9 +208,9 @@ export default function ProfilePage() {
                         <Label htmlFor="name">Full Name</Label>
                         <Input
                           id="name"
-                          value={profileForm.name}
+                          value={profile.name}
                           onChange={(e) =>
-                            setProfileForm((prev) => ({
+                            setProfile((prev) => ({
                               ...prev,
                               name: e.target.value,
                             }))
@@ -223,9 +222,9 @@ export default function ProfilePage() {
                         <Input
                           id="email"
                           type="email"
-                          value={profileForm.email}
+                          value={profile.email}
                           onChange={(e) =>
-                            setProfileForm((prev) => ({
+                            setProfile((prev) => ({
                               ...prev,
                               email: e.target.value,
                             }))
@@ -236,9 +235,9 @@ export default function ProfilePage() {
                         <Label htmlFor="phone">Phone</Label>
                         <Input
                           id="phone"
-                          value={profileForm.phone}
+                          value={profile.phone}
                           onChange={(e) =>
-                            setProfileForm((prev) => ({
+                            setProfile((prev) => ({
                               ...prev,
                               phone: e.target.value,
                             }))
@@ -248,26 +247,18 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div>
-                      <h3 className="text-2xl font-bold">
-                        {profileData.user.name}
-                      </h3>
-                      <p className="text-gray-600">{profileData.user.email}</p>
-                      <p className="text-gray-600">{profileData.user.phone}</p>
+                      <h3 className="text-2xl font-bold">{profile.name}</h3>
+                      <p className="text-gray-600">{profile.email}</p>
+                      <p className="text-gray-600">{profile.phone}</p>
                       <div className="flex items-center space-x-4 mt-2">
                         <div className="flex items-center">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="ml-1 text-sm font-medium">
-                            {profileData.stats.rating}
-                          </span>
+                          <span className="ml-1 text-sm font-medium">4.8</span>
                           <span className="ml-1 text-sm text-gray-500">
-                            ({profileData.stats.reviewCount} reviews)
+                            (127 reviews)
                           </span>
                         </div>
-                        <Badge variant="outline">
-                          {profileData.user.verified
-                            ? "Verified"
-                            : "Unverified"}
-                        </Badge>
+                        <Badge variant="outline">Verified</Badge>
                       </div>
                     </div>
                   )}
@@ -281,16 +272,13 @@ export default function ProfilePage() {
                     id="bio"
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
                     rows={4}
-                    value={profileForm.bio}
+                    value={profile.bio}
                     onChange={(e) =>
-                      setProfileForm((prev) => ({
-                        ...prev,
-                        bio: e.target.value,
-                      }))
+                      setProfile((prev) => ({ ...prev, bio: e.target.value }))
                     }
                   />
                 ) : (
-                  <p className="text-gray-700 mt-1">{profileData.bio}</p>
+                  <p className="text-gray-700 mt-1">{profile.bio}</p>
                 )}
               </div>
             </CardContent>
@@ -308,19 +296,18 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <Input
                       id="experience"
-                      type="number"
-                      value={profileForm.yearsExperience}
+                      value={profile.yearsExperience}
                       onChange={(e) =>
-                        setProfileForm((prev) => ({
+                        setProfile((prev) => ({
                           ...prev,
-                          yearsExperience: parseInt(e.target.value) || 0,
+                          yearsExperience: e.target.value,
                         }))
                       }
                     />
                   ) : (
                     <div className="flex items-center mt-1">
                       <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                      <span>{profileData.yearsExperience} years</span>
+                      <span>{profile.yearsExperience} years</span>
                     </div>
                   )}
                 </div>
@@ -329,19 +316,18 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <Input
                       id="radius"
-                      type="number"
-                      value={profileForm.serviceRadius}
+                      value={profile.serviceRadius}
                       onChange={(e) =>
-                        setProfileForm((prev) => ({
+                        setProfile((prev) => ({
                           ...prev,
-                          serviceRadius: parseInt(e.target.value) || 0,
+                          serviceRadius: e.target.value,
                         }))
                       }
                     />
                   ) : (
                     <div className="flex items-center mt-1">
                       <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                      <span>{profileData.serviceRadius} miles</span>
+                      <span>{profile.serviceRadius} miles</span>
                     </div>
                   )}
                 </div>
@@ -351,9 +337,9 @@ export default function ProfilePage() {
                     <select
                       id="pricing"
                       className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
-                      value={profileForm.pricingModel}
+                      value={profile.pricingModel}
                       onChange={(e) =>
-                        setProfileForm((prev) => ({
+                        setProfile((prev) => ({
                           ...prev,
                           pricingModel: e.target.value,
                         }))
@@ -366,9 +352,7 @@ export default function ProfilePage() {
                   ) : (
                     <div className="flex items-center mt-1">
                       <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
-                      <span className="capitalize">
-                        {profileData.pricingModel}
-                      </span>
+                      <span className="capitalize">{profile.pricingModel}</span>
                     </div>
                   )}
                 </div>
@@ -382,11 +366,7 @@ export default function ProfilePage() {
               <div className="flex justify-between items-center">
                 <CardTitle>Services Offered</CardTitle>
                 {isEditing && (
-                  <Button
-                    onClick={handleAddService}
-                    size="sm"
-                    variant="outline"
-                  >
+                  <Button onClick={addService} size="sm" variant="outline">
                     <Plus className="w-4 h-4 mr-1" />
                     Add Service
                   </Button>
@@ -395,7 +375,7 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {profileData.services.map((service) => (
+                {services.map((service) => (
                   <div
                     key={service.id}
                     className="flex items-center space-x-4 p-3 border rounded-lg"
@@ -406,7 +386,7 @@ export default function ProfilePage() {
                           placeholder="Category"
                           value={service.category}
                           onChange={(e) =>
-                            handleUpdateService(
+                            updateService(
                               service.id,
                               "category",
                               e.target.value
@@ -418,7 +398,7 @@ export default function ProfilePage() {
                           placeholder="Subcategory"
                           value={service.subcategory}
                           onChange={(e) =>
-                            handleUpdateService(
+                            updateService(
                               service.id,
                               "subcategory",
                               e.target.value
@@ -430,7 +410,7 @@ export default function ProfilePage() {
                           placeholder="Rate"
                           value={service.hourlyRate}
                           onChange={(e) =>
-                            handleUpdateService(
+                            updateService(
                               service.id,
                               "hourlyRate",
                               e.target.value
@@ -441,7 +421,7 @@ export default function ProfilePage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleRemoveService(service.id)}
+                          onClick={() => removeService(service.id)}
                           className="text-red-600"
                         >
                           <X className="w-4 h-4" />
@@ -474,7 +454,7 @@ export default function ProfilePage() {
                 <CardTitle>Certifications & Licenses</CardTitle>
                 {isEditing && (
                   <Button
-                    onClick={handleAddCertification}
+                    onClick={addCertification}
                     size="sm"
                     variant="outline"
                   >
@@ -486,7 +466,7 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {profileData.certifications.map((cert) => (
+                {certifications.map((cert) => (
                   <div
                     key={cert.id}
                     className="flex items-center space-x-4 p-4 border rounded-lg"
@@ -501,8 +481,7 @@ export default function ProfilePage() {
                               updateCertification(
                                 cert.id,
                                 "name",
-                                e.target.value,
-                                { name: e.target.value }
+                                e.target.value
                               )
                             }
                           />
@@ -514,8 +493,7 @@ export default function ProfilePage() {
                                 updateCertification(
                                   cert.id,
                                   "issuer",
-                                  e.target.value,
-                                  { issuer: e.target.value }
+                                  e.target.value
                                 )
                               }
                             />
@@ -527,8 +505,7 @@ export default function ProfilePage() {
                                 updateCertification(
                                   cert.id,
                                   "date",
-                                  e.target.value,
-                                  { date: e.target.value }
+                                  e.target.value
                                 )
                               }
                             />
@@ -540,8 +517,7 @@ export default function ProfilePage() {
                                 updateCertification(
                                   cert.id,
                                   "expiryDate",
-                                  e.target.value,
-                                  { expiryDate: e.target.value }
+                                  e.target.value
                                 )
                               }
                             />

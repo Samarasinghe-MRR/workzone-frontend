@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const { token, newPassword, confirmPassword } = await request.json();
-    console.log("Reset password request received:", { token: token ? "***" : null });
+    console.log("Reset password request received:", {
+      token: token ? "***" : null,
+    });
 
     // Validate input
     if (!token || !newPassword) {
@@ -28,11 +30,14 @@ export async function POST(request: Request) {
 
     try {
       // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword }),
-      });
+      const backendResponse = await fetch(
+        "http://localhost:4000/auth/reset-password",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, newPassword }),
+        }
+      );
 
       const data = await backendResponse.json();
       console.log("Backend reset password response:", data);
@@ -54,7 +59,7 @@ export async function POST(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Fallback response when backend is unavailable
       return NextResponse.json({
         success: true,

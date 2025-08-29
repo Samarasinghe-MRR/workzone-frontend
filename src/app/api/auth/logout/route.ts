@@ -11,9 +11,9 @@ export async function POST(request: Request) {
       // Forward the request to your NestJS backend
       const backendResponse = await fetch("http://localhost:4000/auth/logout", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       }
     } catch (backendError) {
       console.error("Backend connection error:", backendError);
-      
+
       // Always return success for logout - even if backend fails
       return NextResponse.json({
         success: true,
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error("Logout error:", error);
-    
+
     // Always return success for logout to clear local state
     return NextResponse.json({
       success: true,
