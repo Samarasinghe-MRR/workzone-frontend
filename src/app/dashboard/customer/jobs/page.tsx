@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +59,7 @@ interface Job {
 }
 
 export default function MyJobsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -297,6 +299,15 @@ export default function MyJobsPage() {
                   className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   Track Job
+                </Button>
+              )}
+              {(job.status === "completed" || job.status === "in-progress") && (
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => router.push(`/dashboard/customer/confirm-completion/${job.id}`)}
+                >
+                  Review Completion
                 </Button>
               )}
             </div>

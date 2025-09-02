@@ -54,27 +54,35 @@ interface QuotationFilters {
 }
 
 class QuotationService {
-  // Provider submits a quotation - matches backend: POST /provider/quotes
+  // Provider submits a quotation - uses Next.js API route
   async createProviderQuotation(
     quotationData: QuotationRequest
   ): Promise<ApiResponse<Quotation>> {
-    return gatewayServices.quotations.post<ApiResponse<Quotation>>(
-      "/provider/quotes",
-      quotationData,
-      true
-    );
+    const response = await fetch("/api/quotations/provider", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(quotationData),
+    });
+
+    return response.json();
   }
 
-  // Get provider's quotations - matches backend: GET /provider/quotes
+  // Get provider's quotations - uses Next.js API route
   async getProviderQuotations(status?: string): Promise<ApiResponse<Quotation[]>> {
     const endpoint = status 
-      ? `/provider/quotes?status=${encodeURIComponent(status)}`
-      : "/provider/quotes";
+      ? `/api/quotations/provider?status=${encodeURIComponent(status)}`
+      : "/api/quotations/provider";
     
-    return gatewayServices.quotations.get<ApiResponse<Quotation[]>>(
-      endpoint,
-      true
-    );
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.json();
   }
 
   // Update provider's quotation - matches backend: PATCH /provider/quotes/:id
@@ -189,12 +197,16 @@ class QuotationService {
     >(endpoint, true);
   }
 
-    // Get quotations received by current customer for a specific job
+    // Get quotations received by current customer for a specific job - uses Next.js API route
   async getJobQuotations(jobId: string): Promise<ApiResponse<Quotation[]>> {
-    return gatewayServices.quotations.get<ApiResponse<Quotation[]>>(
-      `/customer/jobs/${jobId}/quotes`,
-      true
-    );
+    const response = await fetch(`/api/quotations/jobs/${jobId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.json();
   }
 
   // Get specific quotation details (customer view)

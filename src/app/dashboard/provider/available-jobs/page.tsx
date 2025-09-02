@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   MapPin,
   Clock,
   DollarSign,
   Filter,
-  SortAsc,
+  ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +75,7 @@ const mockJobs: Job[] = [
 ];
 
 export default function AvailableJobsPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
@@ -97,8 +99,7 @@ export default function AvailableJobsPage() {
   );
 
   const handleSendQuote = (jobId: string) => {
-    console.log("Sending quote for job:", jobId);
-    // Navigate to quotation form
+    router.push(`/dashboard/provider/send-quotation/${jobId}`);
   };
 
   if (selectedJob) {
@@ -193,6 +194,14 @@ export default function AvailableJobsPage() {
               <Button variant="outline" className="flex-1">
                 Save for Later
               </Button>
+              {/* Add Complete Job button for demonstration */}
+              <Button
+                variant="outline"
+                className="flex-1 border-green-600 text-green-600 hover:bg-green-50"
+                onClick={() => router.push(`/dashboard/provider/complete-job/${selectedJob.id}`)}
+              >
+                Complete Job (Demo)
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -210,7 +219,7 @@ export default function AvailableJobsPage() {
             Filters
           </Button>
           <Button variant="outline" size="sm">
-            <SortAsc className="w-4 h-4 mr-2" />
+            <ArrowUpDown className="w-4 h-4 mr-2" />
             Sort
           </Button>
         </div>
