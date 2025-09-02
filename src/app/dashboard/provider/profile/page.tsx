@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Camera,
   MapPin,
@@ -8,15 +8,17 @@ import {
   Award,
   Clock,
   DollarSign,
-  Upload,
-  Plus,
+  Loader2,
   X,
+  Plus,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { useProviderProfile } from "@/features/provider/hooks/useProviderProfile";
 
 interface Certification {
   id: string;
@@ -34,19 +36,27 @@ interface Service {
 }
 
 export default function ProfilePage() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { profile, loading, error, updateProfile } = useProviderProfile();
 
-  const [profile, setProfile] = useState({
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    phone: "+1 (555) 123-4567",
-    bio: "Experienced electrician with 10+ years in residential and commercial installations. Licensed and insured professional committed to quality work.",
-    yearsExperience: "10",
-    serviceRadius: "25",
-    pricingModel: "hourly",
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    businessName: "",
+    businessAddress: "",
+    bio: "",
+    yearsOfExperience: 0,
+    serviceRadius: 0,
+    hourlyRate: 0,
+    responseTimeHours: 0,
+    isAvailable: true,
   });
 
+  const [alertState, setAlertState] = useState<{
+    show: boolean;
+    type: "success" | "error";
+    message: string;
+  }>({ show: false, type: "success", message: "" });
+
+  // Mock data for services and certifications (these would come from backend in full implementation)
   const [services, setServices] = useState<Service[]>([
     {
       id: "1",
@@ -60,12 +70,6 @@ export default function ProfilePage() {
       subcategory: "Repair",
       hourlyRate: "$75",
     },
-    {
-      id: "3",
-      category: "Electrical",
-      subcategory: "Maintenance",
-      hourlyRate: "$70",
-    },
   ]);
 
   const [certifications, setCertifications] = useState<Certification[]>([
@@ -76,25 +80,61 @@ export default function ProfilePage() {
       date: "2015-03-15",
       expiryDate: "2026-03-15",
     },
-    {
-      id: "2",
-      name: "OSHA Safety Certified",
-      issuer: "OSHA",
-      date: "2023-06-10",
-      expiryDate: "2026-06-10",
-    },
   ]);
 
+  // Update form data when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        businessName: profile.businessName || profile.category || "",
+        businessAddress: profile.businessAddress || profile.location || "",
+        bio: profile.bio || "",
+        yearsOfExperience:
+          profile.yearsOfExperience || profile.experienceYears || 0,
+        serviceRadius: profile.serviceRadius || 0,
+        hourlyRate: profile.hourlyRate || 0,
+        responseTimeHours:
+          profile.responseTimeHours || profile.averageResponseTime || 0,
+        isAvailable: profile.isAvailable,
+      });
+    }
+  }, [profile]);
+
+  const showAlert = (type: "success" | "error", message: string) => {
+    setAlertState({ show: true, type, message });
+    setTimeout(
+      () => setAlertState({ show: false, type: "success", message: "" }),
+      5000
+    );
+  };
+
   const handleSaveProfile = async () => {
-    setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Profile updated:", profile);
-      setIsEditing(false);
+      // Only send fields that exist in the Prisma schema
+      const updateData = {
+        category: formData.businessName, // Map businessName to category
+        location: formData.businessAddress, // Map businessAddress to location
+        experienceYears: formData.yearsOfExperience,
+        serviceRadius: formData.serviceRadius,
+        averageResponseTime: formData.responseTimeHours,
+        isAvailable: formData.isAvailable,
+        availability: formData.isAvailable, // Both fields for compatibility
+      };
+
+      console.log("Sending update data:", updateData);
+
+      const result = await updateProfile(updateData);
+      if (result.success) {
+        setIsEditing(false);
+        showAlert("success", result.message || "Profile updated successfully");
+      } else {
+        showAlert("error", result.message || "Failed to update profile");
+      }
     } catch (error) {
-      console.error("Error updating profile:", error);
-    } finally {
-      setLoading(false);
+      showAlert(
+        "error",
+        error instanceof Error ? error.message : "Failed to update profile"
+      );
     }
   };
 
@@ -146,26 +186,65 @@ export default function ProfilePage() {
     );
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="text-red-800">
+            <strong>Error loading profile:</strong> {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Alert */}
+      {alertState.show && (
+        <div
+          className={`p-4 rounded-md ${
+            alertState.type === "success"
+              ? "bg-green-50 border border-green-200"
+              : "bg-red-50 border border-red-200"
+          }`}
+        >
+          <div
+            className={
+              alertState.type === "success" ? "text-green-800" : "text-red-800"
+            }
+          >
+            {alertState.message}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
         <div className="flex space-x-2">
           {isEditing ? (
             <>
-              <Button
-                variant="outline"
-                onClick={() => setIsEditing(false)}
-                disabled={loading}
-              >
+              <Button variant="outline" onClick={() => setIsEditing(false)}>
                 Cancel
               </Button>
               <Button
                 onClick={handleSaveProfile}
-                disabled={loading}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                {loading ? "Saving..." : "Save Changes"}
+                Save Changes
               </Button>
             </>
           ) : (
@@ -190,10 +269,13 @@ export default function ProfilePage() {
               <div className="flex items-center space-x-6">
                 <div className="relative">
                   <div className="w-24 h-24 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-bold">
-                    {profile.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                    {profile?.businessName || profile?.category
+                      ? (profile.businessName || profile.category)
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                      : "SP"}
                   </div>
                   {isEditing && (
                     <button className="absolute bottom-0 right-0 bg-white border-2 border-gray-300 rounded-full p-2 hover:bg-gray-50">
@@ -205,41 +287,29 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor="name">Full Name</Label>
+                        <Label htmlFor="businessName">Business Name</Label>
                         <Input
-                          id="name"
-                          value={profile.name}
+                          id="businessName"
+                          value={formData.businessName}
                           onChange={(e) =>
-                            setProfile((prev) => ({
+                            setFormData((prev) => ({
                               ...prev,
-                              name: e.target.value,
+                              businessName: e.target.value,
                             }))
                           }
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="businessAddress">
+                          Business Address
+                        </Label>
                         <Input
-                          id="email"
-                          type="email"
-                          value={profile.email}
+                          id="businessAddress"
+                          value={formData.businessAddress}
                           onChange={(e) =>
-                            setProfile((prev) => ({
+                            setFormData((prev) => ({
                               ...prev,
-                              email: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="phone">Phone</Label>
-                        <Input
-                          id="phone"
-                          value={profile.phone}
-                          onChange={(e) =>
-                            setProfile((prev) => ({
-                              ...prev,
-                              phone: e.target.value,
+                              businessAddress: e.target.value,
                             }))
                           }
                         />
@@ -247,18 +317,29 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div>
-                      <h3 className="text-2xl font-bold">{profile.name}</h3>
-                      <p className="text-gray-600">{profile.email}</p>
-                      <p className="text-gray-600">{profile.phone}</p>
+                      <h3 className="text-2xl font-bold">
+                        {profile?.businessName ||
+                          profile?.category ||
+                          "Business Name"}
+                      </h3>
+                      <p className="text-gray-600">
+                        {profile?.businessAddress ||
+                          profile?.location ||
+                          "Business Address"}
+                      </p>
                       <div className="flex items-center space-x-4 mt-2">
                         <div className="flex items-center">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="ml-1 text-sm font-medium">4.8</span>
+                          <span className="ml-1 text-sm font-medium">
+                            {profile?.rating || 4.8}
+                          </span>
                           <span className="ml-1 text-sm text-gray-500">
-                            (127 reviews)
+                            ({profile?.completedJobs || 127} reviews)
                           </span>
                         </div>
-                        <Badge variant="outline">Verified</Badge>
+                        <Badge variant="outline">
+                          {profile?.isAvailable ? "Available" : "Unavailable"}
+                        </Badge>
                       </div>
                     </div>
                   )}
@@ -272,13 +353,15 @@ export default function ProfilePage() {
                     id="bio"
                     className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
                     rows={4}
-                    value={profile.bio}
+                    value={formData.bio}
                     onChange={(e) =>
-                      setProfile((prev) => ({ ...prev, bio: e.target.value }))
+                      setFormData((prev) => ({ ...prev, bio: e.target.value }))
                     }
                   />
                 ) : (
-                  <p className="text-gray-700 mt-1">{profile.bio}</p>
+                  <p className="text-gray-700 mt-1">
+                    {profile?.bio || "No bio available"}
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -290,24 +373,30 @@ export default function ProfilePage() {
               <CardTitle>Professional Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="experience">Years of Experience</Label>
                   {isEditing ? (
                     <Input
                       id="experience"
-                      value={profile.yearsExperience}
+                      type="number"
+                      value={formData.yearsOfExperience}
                       onChange={(e) =>
-                        setProfile((prev) => ({
+                        setFormData((prev) => ({
                           ...prev,
-                          yearsExperience: e.target.value,
+                          yearsOfExperience: parseInt(e.target.value) || 0,
                         }))
                       }
                     />
                   ) : (
                     <div className="flex items-center mt-1">
                       <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                      <span>{profile.yearsExperience} years</span>
+                      <span>
+                        {profile?.yearsOfExperience ||
+                          profile?.experienceYears ||
+                          0}{" "}
+                        years
+                      </span>
                     </div>
                   )}
                 </div>
@@ -316,47 +405,90 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <Input
                       id="radius"
-                      value={profile.serviceRadius}
+                      type="number"
+                      value={formData.serviceRadius}
                       onChange={(e) =>
-                        setProfile((prev) => ({
+                        setFormData((prev) => ({
                           ...prev,
-                          serviceRadius: e.target.value,
+                          serviceRadius: parseInt(e.target.value) || 0,
                         }))
                       }
                     />
                   ) : (
                     <div className="flex items-center mt-1">
                       <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                      <span>{profile.serviceRadius} miles</span>
+                      <span>{profile?.serviceRadius || 0} miles</span>
                     </div>
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="pricing">Pricing Model</Label>
+                  <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
                   {isEditing ? (
-                    <select
-                      id="pricing"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
-                      value={profile.pricingModel}
+                    <Input
+                      id="hourlyRate"
+                      type="number"
+                      value={formData.hourlyRate}
                       onChange={(e) =>
-                        setProfile((prev) => ({
+                        setFormData((prev) => ({
                           ...prev,
-                          pricingModel: e.target.value,
+                          hourlyRate: parseFloat(e.target.value) || 0,
                         }))
                       }
-                    >
-                      <option value="hourly">Hourly Rate</option>
-                      <option value="fixed">Fixed Price</option>
-                      <option value="both">Both</option>
-                    </select>
+                    />
                   ) : (
                     <div className="flex items-center mt-1">
                       <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
-                      <span className="capitalize">{profile.pricingModel}</span>
+                      <span>${profile?.hourlyRate || 0}/hr</span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="responseTime">Response Time (hours)</Label>
+                  {isEditing ? (
+                    <Input
+                      id="responseTime"
+                      type="number"
+                      value={formData.responseTimeHours}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          responseTimeHours: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <div className="flex items-center mt-1">
+                      <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>
+                        {profile?.responseTimeHours ||
+                          profile?.averageResponseTime ||
+                          0}{" "}
+                        hours
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
+
+              {isEditing && (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isAvailable"
+                    checked={formData.isAvailable}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        isAvailable: e.target.checked,
+                      }))
+                    }
+                    className="rounded"
+                  />
+                  <Label htmlFor="isAvailable">
+                    Currently Available for New Projects
+                  </Label>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -548,12 +680,6 @@ export default function ProfilePage() {
                               ).toLocaleDateString()}`}
                           </p>
                         </div>
-                        {isEditing && (
-                          <Button variant="outline" size="sm">
-                            <Upload className="w-4 h-4 mr-1" />
-                            Upload
-                          </Button>
-                        )}
                       </>
                     )}
                   </div>

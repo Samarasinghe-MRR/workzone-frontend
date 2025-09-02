@@ -19,12 +19,15 @@ export async function POST(request: Request) {
     }
 
     try {
-      // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // Forward the request to API Gateway instead of direct service call
+      const backendResponse = await fetch(
+        "http://localhost:8081/api/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       const data = await backendResponse.json();
       console.log("Backend login response:", data);

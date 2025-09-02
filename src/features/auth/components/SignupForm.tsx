@@ -50,8 +50,19 @@ export default function SignupForm() {
     setLoading(true);
     setApiError(null);
 
+    // Split name into firstName and lastName
+    const [firstName, ...rest] = data.name.trim().split(" ");
+    const lastName = rest.join(" ");
+
+    // Prepare the payload for the API
+    const signupPayload = {
+      ...data,
+      firstName,
+      lastName,
+    };
+
     try {
-      const response = await authService.signup(data);
+      const response = await authService.signup(signupPayload);
 
       if (response.success) {
         // Redirect to login page after successful signup

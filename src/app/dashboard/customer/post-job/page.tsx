@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
   Card,
   //CardHeader,
@@ -50,11 +51,15 @@ const categories = [
   "Other",
 ];
 
+import { jobService } from "@/services/jobService";
+
 export default function PostJobPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -63,21 +68,69 @@ export default function PostJobPage() {
     watch,
   } = useForm<JobFormValues>({
     resolver: zodResolver(jobSchema),
+    mode: "onBlur", // Only validate on blur, not on change
+    shouldFocusError: false, // Prevent auto-focus that might trigger submission
   });
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Prevent form submission on Enter key, except for textareas and the submit button
+    if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+      e.preventDefault();
+    }
+  };
+
   const onSubmit = async (data: JobFormValues) => {
+    // Only allow submission on the final step
+    if (currentStep !== 3) {
+      console.log("Preventing submission - not on final step");
+      return;
+    }
+
     setLoading(true);
+    setError(null);
     try {
-      // Here you would call your API to create the job
-      console.log("Job data:", data);
-      console.log("Files:", selectedFiles);
+      // Create job using backend API
+      console.log("Creating job:", data);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Send only the core required fields that the backend accepts
+      const jobData = {
+        title: data.title,
+        category: data.category,
+        description: data.description,
+        location: data.location,
+      };
 
-      router.push("/dashboard/customer/jobs");
+      // Debug: Log current user info
+      console.log("Current user:", user);
+
+      console.log("Sending job data to backend:", jobData);
+      const response = await jobService.createJob(jobData);
+      console.log("Backend response:", response);
+
+      // Handle different response formats
+      // Backend might return job directly or wrapped in success response
+      const isSuccessResponse = response && response.success === true;
+      const isJobResponse =
+        response && typeof response === "object" && "id" in response;
+
+      if (isSuccessResponse || isJobResponse) {
+        console.log("Job created successfully:", response);
+        router.push("/dashboard/customer/jobs");
+      } else {
+        console.error("Unexpected response format:", response);
+        const errorMsg =
+          response && typeof response === "object" && "message" in response
+            ? String(response.message)
+            : "Failed to create job - unexpected response format";
+        throw new Error(errorMsg);
+      }
     } catch (error) {
       console.error("Error posting job:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create job. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -381,8 +434,19 @@ export default function PostJobPage() {
 
       <Card>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            onKeyDown={handleKeyDown}
+            noValidate // Prevent browser validation that might trigger submission
+          >
             {renderStep()}
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-6">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
 
             <div className="flex justify-between mt-8">
               <Button

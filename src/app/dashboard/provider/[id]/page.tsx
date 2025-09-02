@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { authApiClient } from "@/lib/api";
+import { userService } from "@/services/userService";
+import { tokenManager } from "@/lib/api";
 
 interface ProviderPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 interface ProviderData {
@@ -25,7 +26,7 @@ interface ProviderData {
 
 export default function ProviderPage({ params }: ProviderPageProps) {
   const router = useRouter();
-  const { id } = params;
+  const { id } = use(params); // Unwrap the Promise using React.use()
   const [providerData, setProviderData] = useState<ProviderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,39 +36,40 @@ export default function ProviderPage({ params }: ProviderPageProps) {
       try {
         setLoading(true);
 
-        // First check if this is the current user's own profile
-        // If so, use /users/me for better security and caching
-        try {
-          const currentUserResponse = await authApiClient.get<{
-            data: ProviderData;
-          }>("/users/me", true);
-          if (currentUserResponse.data && currentUserResponse.data.id === id) {
-            setProviderData(currentUserResponse.data);
-            return;
-          }
-        } catch {
-          console.log(
-            "Could not fetch current user, proceeding with ID-based fetch"
-          );
+        // Check if user is authenticated
+        if (!tokenManager.isAuthenticated()) {
+          router.push("/auth/login");
+          return;
         }
 
-        // Fetch provider-specific data using the ID
-        const response = await authApiClient.get<{ data: ProviderData }>(
-          `/users/${id}`,
-          true
-        );
-
-        if (response.data) {
-          setProviderData(response.data);
+        // Use the backend dashboard endpoint that matches your controller
+        // GET /users/me/dashboard - this will return role-specific data
+        const dashboardResponse = await userService.getDashboard();
+        
+        if (dashboardResponse.success && dashboardResponse.data) {
+          // The backend should return provider-specific dashboard data
+          const providerData: ProviderData = {
+            id: dashboardResponse.data.id,
+            name: dashboardResponse.data.name || 'Provider',
+            email: dashboardResponse.data.email,
+            phone: dashboardResponse.data.phone,
+            location: dashboardResponse.data.location,
+            businessName: dashboardResponse.data.businessName,
+            businessAddress: dashboardResponse.data.businessAddress,
+            role: 'provider', // We know this is a provider dashboard
+            rating: dashboardResponse.data.rating || 0,
+            completedJobs: dashboardResponse.data.completedJobs || 0,
+            memberSince: dashboardResponse.data.createdAt || dashboardResponse.data.memberSince,
+          };
+          setProviderData(providerData);
+        } else {
+          setError("Unable to load provider dashboard data");
         }
       } catch (err) {
-        console.error("Error fetching provider data:", err);
+        console.error("Error fetching provider dashboard:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to fetch provider data"
+          err instanceof Error ? err.message : "Failed to fetch provider dashboard"
         );
-
-        // Redirect to main provider dashboard if user not found or unauthorized
-        router.push("/dashboard/provider");
       } finally {
         setLoading(false);
       }
@@ -76,9 +78,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
     if (id) {
       fetchProviderData();
     }
-  }, [id, router]);
-
-  if (loading) {
+  }, [id, router]);  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-500"></div>
@@ -90,14 +90,26 @@ export default function ProviderPage({ params }: ProviderPageProps) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-2">Error</h1>
-          <p className="text-gray-600 mb-4">{error || "Provider not found"}</p>
-          <button
-            onClick={() => router.push("/dashboard/provider")}
-            className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700"
-          >
-            Back to Dashboard
-          </button>
+          <h1 className="text-2xl font-bold text-red-600 mb-2">
+            {error ? "Error" : "Provider Not Found"}
+          </h1>
+          <p className="text-gray-600 mb-4">
+            {error || "Unable to load provider profile"}
+          </p>
+          <div className="space-x-4">
+            <button
+              onClick={() => router.push("/dashboard/provider")}
+              className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700"
+            >
+              Go to Dashboard
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );

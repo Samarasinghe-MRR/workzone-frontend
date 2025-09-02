@@ -16,101 +16,10 @@ import {
   Shield,
   Clock,
   DollarSign,
+  Loader2,
 } from "lucide-react";
-
-interface Provider {
-  id: string;
-  name: string;
-  category: string;
-  specialties: string[];
-  location: string;
-  distance: number;
-  rating: number;
-  reviewCount: number;
-  hourlyRate?: number;
-  fixedPriceRange?: { min: number; max: number };
-  avatar: string;
-  isVerified: boolean;
-  responseTime: string;
-  completedJobs: number;
-  description: string;
-  availability: "available" | "busy" | "offline";
-}
-
-const mockProviders: Provider[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    category: "Cleaning",
-    specialties: ["Deep Cleaning", "Regular Cleaning", "Move-out Cleaning"],
-    location: "Downtown",
-    distance: 2.3,
-    rating: 4.9,
-    reviewCount: 127,
-    hourlyRate: 35,
-    avatar: "SJ",
-    isVerified: true,
-    responseTime: "Usually responds within 1 hour",
-    completedJobs: 156,
-    description:
-      "Professional cleaning service with 5 years of experience. Eco-friendly products used.",
-    availability: "available",
-  },
-  {
-    id: "2",
-    name: "Mike Wilson",
-    category: "Plumbing",
-    specialties: ["Emergency Repairs", "Installation", "Maintenance"],
-    location: "Midtown",
-    distance: 3.7,
-    rating: 4.8,
-    reviewCount: 89,
-    fixedPriceRange: { min: 100, max: 500 },
-    avatar: "MW",
-    isVerified: true,
-    responseTime: "Usually responds within 30 minutes",
-    completedJobs: 234,
-    description:
-      "Licensed plumber with 10+ years experience. Available for emergency calls.",
-    availability: "available",
-  },
-  {
-    id: "3",
-    name: "Green Thumb Co.",
-    category: "Gardening",
-    specialties: ["Lawn Care", "Landscaping", "Tree Service"],
-    location: "Suburbs",
-    distance: 5.1,
-    rating: 4.7,
-    reviewCount: 203,
-    hourlyRate: 45,
-    avatar: "GT",
-    isVerified: true,
-    responseTime: "Usually responds within 2 hours",
-    completedJobs: 312,
-    description:
-      "Full-service landscaping company. Serving the area for over 15 years.",
-    availability: "busy",
-  },
-  {
-    id: "4",
-    name: "Alex Rodriguez",
-    category: "Electrical",
-    specialties: ["Wiring", "Installation", "Repairs"],
-    location: "Downtown",
-    distance: 1.8,
-    rating: 4.9,
-    reviewCount: 156,
-    fixedPriceRange: { min: 150, max: 800 },
-    avatar: "AR",
-    isVerified: true,
-    responseTime: "Usually responds within 1 hour",
-    completedJobs: 189,
-    description:
-      "Licensed electrician specializing in residential and commercial work.",
-    availability: "available",
-  },
-];
+import { useServiceProviders } from "@/hooks/useServiceProviders";
+import type { ServiceProvider } from "@/types/serviceProviders";
 
 const categories = [
   "All Categories",
@@ -136,59 +45,75 @@ export default function FindProvidersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedPriceRange, setSelectedPriceRange] = useState("All Prices");
-  const [sortBy, setSortBy] = useState("rating");
-  const [providers] = useState<Provider[]>(mockProviders);
+  const [sortBy, setSortBy] = useState<
+    "rating" | "distance" | "price" | "experience"
+  >("rating");
   const [savedProviders, setSavedProviders] = useState<string[]>([]);
 
-  const filteredProviders = providers.filter((provider) => {
-    const matchesSearch =
-      provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      provider.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      provider.specialties.some((s) =>
-        s.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
-    const matchesCategory =
-      selectedCategory === "All Categories" ||
-      provider.category === selectedCategory;
-
-    const matchesPrice =
-      selectedPriceRange === "All Prices" ||
-      (() => {
-        const rate = provider.hourlyRate || provider.fixedPriceRange?.min || 0;
-        switch (selectedPriceRange) {
-          case "$0 - $50":
-            return rate <= 50;
-          case "$50 - $100":
-            return rate > 50 && rate <= 100;
-          case "$100 - $200":
-            return rate > 100 && rate <= 200;
-          case "$200+":
-            return rate > 200;
-          default:
-            return true;
-        }
-      })();
-
-    return matchesSearch && matchesCategory && matchesPrice;
+  // Use the backend integration hook
+  const {
+    providers,
+    loading,
+    error,
+    total,
+    hasMore,
+    searchProviders,
+    filterByCategory,
+    loadMore,
+    refresh,
+    clearError,
+  } = useServiceProviders({
+    page: 1,
+    limit: 20,
+    sortBy: "rating",
+    sortOrder: "desc",
   });
 
-  const sortedProviders = [...filteredProviders].sort((a, b) => {
-    switch (sortBy) {
-      case "rating":
-        return b.rating - a.rating;
-      case "distance":
-        return a.distance - b.distance;
-      case "price":
-        const aPrice = a.hourlyRate || a.fixedPriceRange?.min || 0;
-        const bPrice = b.hourlyRate || b.fixedPriceRange?.min || 0;
-        return aPrice - bPrice;
-      default:
-        return 0;
+  // Handle search
+  const handleSearch = async () => {
+    if (searchTerm.trim()) {
+      await searchProviders(searchTerm, {
+        category:
+          selectedCategory === "All Categories" ? undefined : selectedCategory,
+        sortBy,
+        sortOrder: "desc",
+      });
+    } else {
+      await filterByCategory(selectedCategory, {
+        sortBy,
+        sortOrder: "desc",
+      });
     }
-  });
+  };
 
-  const toggleSaveProvider = (providerId: string) => {
+  // Handle category filter
+  const handleCategoryChange = async (category: string) => {
+    setSelectedCategory(category);
+    await filterByCategory(category, {
+      search: searchTerm || undefined,
+      sortBy,
+      sortOrder: "desc",
+    });
+  };
+
+  // Handle sort change
+  const handleSortChange = async (newSortBy: typeof sortBy) => {
+    setSortBy(newSortBy);
+    await filterByCategory(selectedCategory, {
+      search: searchTerm || undefined,
+      sortBy: newSortBy,
+      sortOrder: "desc",
+    });
+  };
+
+  // Handle search input enter key
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const toggleSavedProvider = (providerId: string) => {
     setSavedProviders((prev) =>
       prev.includes(providerId)
         ? prev.filter((id) => id !== providerId)
@@ -196,8 +121,60 @@ export default function FindProvidersPage() {
     );
   };
 
-  const ProviderCard = ({ provider }: { provider: Provider }) => {
+  const getProviderName = (provider: ServiceProvider) => {
+    if (provider.businessName) {
+      return provider.businessName;
+    }
+    if (provider.user) {
+      return `${provider.user.firstName} ${provider.user.lastName}`;
+    }
+    return "Service Provider";
+  };
+
+  const getProviderInitials = (provider: ServiceProvider) => {
+    const name = getProviderName(provider);
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+  };
+
+  const getAvailabilityStatus = (provider: ServiceProvider) => {
+    if (!provider.availability || !provider.isAvailable) {
+      return "offline";
+    }
+    return "available";
+  };
+
+  const getAvailabilityColor = (status: string) => {
+    switch (status) {
+      case "available":
+        return "bg-green-500";
+      case "busy":
+        return "bg-yellow-500";
+      case "offline":
+        return "bg-gray-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const formatResponseTime = (hours: number) => {
+    if (hours < 1) {
+      return "Usually responds within 30 minutes";
+    } else if (hours === 1) {
+      return "Usually responds within 1 hour";
+    } else {
+      return `Usually responds within ${hours} hours`;
+    }
+  };
+
+  const ProviderCard = ({ provider }: { provider: ServiceProvider }) => {
     const isSaved = savedProviders.includes(provider.id);
+    const providerName = getProviderName(provider);
+    const availabilityStatus = getAvailabilityStatus(provider);
 
     return (
       <Card className="hover:shadow-lg transition-shadow">
@@ -205,26 +182,22 @@ export default function FindProvidersPage() {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center text-lg font-medium mr-4">
-                {provider.avatar}
+                {getProviderInitials(provider)}
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {provider.name}
+                    {providerName}
                   </h3>
-                  {provider.isVerified && (
+                  {provider.user?.isVerified && (
                     <div title="Verified Provider">
                       <Shield className="w-4 h-4 text-blue-500" />
                     </div>
                   )}
                   <span
-                    className={`w-2 h-2 rounded-full ${
-                      provider.availability === "available"
-                        ? "bg-green-500"
-                        : provider.availability === "busy"
-                        ? "bg-yellow-500"
-                        : "bg-gray-400"
-                    }`}
+                    className={`w-2 h-2 rounded-full ${getAvailabilityColor(
+                      availabilityStatus
+                    )}`}
                   />
                 </div>
                 <p className="text-emerald-600 font-medium">
@@ -233,16 +206,16 @@ export default function FindProvidersPage() {
                 <div className="flex items-center mt-1">
                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
                   <span className="ml-1 text-sm font-medium">
-                    {provider.rating}
+                    {provider.rating.toFixed(1)}
                   </span>
                   <span className="ml-1 text-sm text-gray-500">
-                    ({provider.reviewCount} reviews)
+                    (Reviews available)
                   </span>
                 </div>
               </div>
             </div>
             <button
-              onClick={() => toggleSaveProvider(provider.id)}
+              onClick={() => toggleSavedProvider(provider.id)}
               className={`p-2 rounded-full transition-colors ${
                 isSaved
                   ? "text-red-500 bg-red-50"
@@ -253,12 +226,16 @@ export default function FindProvidersPage() {
             </button>
           </div>
 
-          <p className="text-gray-600 text-sm mb-3">{provider.description}</p>
+          {provider.businessName && (
+            <p className="text-gray-600 text-sm mb-3">
+              Business: {provider.businessName}
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {provider.specialties.map((specialty, index) => (
+            {provider.specializations?.map((spec, index) => (
               <Badge key={index} variant="secondary" className="text-xs">
-                {specialty}
+                {spec.category?.name || spec.categoryId}
               </Badge>
             ))}
           </div>
@@ -266,21 +243,24 @@ export default function FindProvidersPage() {
           <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
             <div className="flex items-center text-gray-600">
               <MapPin className="w-4 h-4 mr-2" />
-              {provider.location} ({provider.distance} mi)
+              {provider.location}{" "}
+              {provider.distance && `(${provider.distance.toFixed(1)} mi)`}
             </div>
             <div className="flex items-center text-gray-600">
               <Clock className="w-4 h-4 mr-2" />
-              {provider.responseTime}
+              {provider.averageResponseTime
+                ? formatResponseTime(provider.averageResponseTime)
+                : "Response time varies"}
             </div>
             <div className="flex items-center text-gray-600">
               <DollarSign className="w-4 h-4 mr-2" />
               {provider.hourlyRate
                 ? `$${provider.hourlyRate}/hour`
-                : `$${provider.fixedPriceRange?.min} - $${provider.fixedPriceRange?.max}`}
+                : "Price on request"}
             </div>
             <div className="flex items-center text-gray-600">
               <Shield className="w-4 h-4 mr-2" />
-              {provider.completedJobs} jobs completed
+              {provider.completedJobs || 0} jobs completed
             </div>
           </div>
 
@@ -304,8 +284,22 @@ export default function FindProvidersPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Find Providers</h1>
         <div className="text-sm text-gray-600">
-          {sortedProviders.length} provider
-          {sortedProviders.length !== 1 ? "s" : ""} found
+          {loading ? (
+            <div className="flex items-center">
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              Loading...
+            </div>
+          ) : (
+            <>
+              {providers.length} provider
+              {providers.length !== 1 ? "s" : ""} found
+              {total && total > providers.length && (
+                <span className="ml-2 text-gray-500">
+                  (showing {providers.length} of {total})
+                </span>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -320,6 +314,7 @@ export default function FindProvidersPage() {
                   placeholder="Search by name, category, or specialty..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
                   className="pl-10"
                 />
               </div>
@@ -327,7 +322,7 @@ export default function FindProvidersPage() {
 
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               {categories.map((category) => (
@@ -357,7 +352,9 @@ export default function FindProvidersPage() {
               </span>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) =>
+                  handleSortChange(e.target.value as typeof sortBy)
+                }
                 className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="rating">Highest Rated</option>
@@ -376,25 +373,88 @@ export default function FindProvidersPage() {
 
       {/* Providers Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {sortedProviders.length > 0 ? (
-          sortedProviders.map((provider) => (
-            <ProviderCard key={provider.id} provider={provider} />
-          ))
-        ) : (
+        {error && (
           <div className="col-span-full">
             <Card>
               <CardContent className="p-12 text-center">
-                <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No providers found
-                </h3>
-                <p className="text-gray-600">
-                  Try adjusting your search criteria or filters to find more
-                  providers.
+                <p className="text-red-600 mb-4">
+                  Error loading providers: {error}
                 </p>
+                <Button onClick={() => clearError()} variant="outline">
+                  Try Again
+                </Button>
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {!error && (
+          <>
+            {loading && providers.length === 0 ? (
+              <div className="col-span-full">
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <Loader2 className="mx-auto h-12 w-12 text-gray-400 mb-4 animate-spin" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Loading providers...
+                    </h3>
+                    <p className="text-gray-600">
+                      Please wait while we search for service providers.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : providers.length > 0 ? (
+              <>
+                {providers.map((provider: ServiceProvider) => (
+                  <ProviderCard key={provider.id} provider={provider} />
+                ))}
+
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="col-span-full flex justify-center">
+                    <Button
+                      onClick={loadMore}
+                      disabled={loading}
+                      variant="outline"
+                      className="w-full max-w-md"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Loading more...
+                        </>
+                      ) : (
+                        "Load More Providers"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="col-span-full">
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No providers found
+                    </h3>
+                    <p className="text-gray-600">
+                      Try adjusting your search criteria or filters to find more
+                      providers.
+                    </p>
+                    <Button
+                      onClick={refresh}
+                      variant="outline"
+                      className="mt-4"
+                    >
+                      Refresh Search
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import type { ApiResponse } from "@/types";
+import type { ApiResponse, AuthAligned } from "@/types";
 
 const API_BASE_URL = "/api"; // Use Next.js API routes instead of direct backend calls
 
@@ -13,10 +13,9 @@ const getAuthHeaders = () => {
 
 export const authPasswordService = {
   // Password Management
-  async changePassword(passwordData: {
-    currentPassword: string;
-    newPassword: string;
-  }): Promise<ApiResponse<{ message: string }>> {
+  async changePassword(
+    passwordData: AuthAligned.ChangePasswordRequest
+  ): Promise<ApiResponse<{ message: string }>> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: "PATCH",

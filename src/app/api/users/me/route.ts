@@ -19,14 +19,17 @@ export async function GET(request: Request) {
     }
 
     try {
-      // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/users/me", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Forward the request to API Gateway instead of direct service call
+      const backendResponse = await fetch(
+        "http://localhost:8081/api/users/me",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await backendResponse.json();
       console.log("Backend get profile response:", data);
@@ -99,15 +102,18 @@ export async function PATCH(request: Request) {
     }
 
     try {
-      // Forward the request to your NestJS backend
-      const backendResponse = await fetch("http://localhost:4000/users/me", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileData),
-      });
+      // Forward the request to API Gateway instead of direct service call
+      const backendResponse = await fetch(
+        "http://localhost:8081/api/users/me",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(profileData),
+        }
+      );
 
       const data = await backendResponse.json();
       console.log("Backend update profile response:", data);

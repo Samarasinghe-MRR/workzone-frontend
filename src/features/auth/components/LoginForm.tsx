@@ -38,28 +38,53 @@ export default function LoginForm() {
     try {
       console.log("Form data being submitted:", data); // Debug log
       const response = await authService.login(data);
+      console.log("Auth service response:", response); // Debug log
 
       if (response.success && response.data) {
         // Redirect based on user role using dynamic routes
-        const userRole = response.data.role;
+        const userRole: string = response.data.role;
         const userId = response.data.id;
 
+        console.log("Login successful, redirecting user:", {
+          userId,
+          role: userRole,
+        }); // Debug log
+
+        // Convert backend role format to frontend routing format
         switch (userRole) {
-          case "admin":
+          case "ADMIN":
+            console.log("Redirecting to admin dashboard");
             router.push(`/dashboard/admin/${userId}`);
             break;
-          case "customer":
+          case "CUSTOMER":
+            console.log("Redirecting to customer dashboard");
             router.push(`/dashboard/customer/${userId}`);
             break;
-          case "provider":
+          case "SERVICE_PROVIDER":
+            console.log("Redirecting to provider dashboard");
             router.push(`/dashboard/provider/${userId}`);
             break;
           default:
-            // Fallback to static route
-            router.push("/dashboard/customer");
+            console.log("Using fallback redirect logic for role:", userRole);
+            // Fallback to static route based on role
+            const roleString = String(userRole).toLowerCase();
+            if (roleString.includes("customer")) {
+              router.push("/dashboard/customer");
+            } else if (
+              roleString.includes("provider") ||
+              roleString.includes("service")
+            ) {
+              router.push("/dashboard/provider");
+            } else {
+              router.push("/dashboard/customer"); // Default fallback
+            }
         }
+      } else {
+        console.error("Login response missing success or data:", response);
+        setApiError("Login failed: Invalid response from server");
       }
     } catch (error) {
+      console.error("Login error:", error);
       setApiError(error instanceof Error ? error.message : "Login failed");
     } finally {
       setLoading(false);

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { authApiClient } from "@/lib/api";
 
 interface AdminPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 interface AdminData {
@@ -18,7 +18,7 @@ interface AdminData {
 
 export default function AdminPage({ params }: AdminPageProps) {
   const router = useRouter();
-  const { id } = params;
+  const { id } = use(params); // Unwrap the Promise using React.use()
   const [adminData, setAdminData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

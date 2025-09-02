@@ -36,14 +36,17 @@ export async function GET(
     }
 
     try {
-      // Forward the request to your NestJS backend
-      const backendResponse = await fetch(`http://localhost:4000/users/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Forward the request to API Gateway instead of direct service call
+      const backendResponse = await fetch(
+        `http://localhost:8081/api/users/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await backendResponse.json();
       console.log(`Backend get user by ID response:`, data);
@@ -93,6 +96,93 @@ export async function GET(
     }
   } catch (error) {
     console.error("Error fetching user by ID:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    const { id } = params;
+    const updateData = await request.json();
+
+    console.log(`Update user request received for ID: ${id}`, updateData);
+
+    // Validate token
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Authorization token is required",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Validate ID format (basic UUID check)
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid user ID format",
+        },
+        { status: 400 }
+      );
+    }
+
+    try {
+      // Forward the request to API Gateway instead of direct service call
+      const backendResponse = await fetch(
+        `http://localhost:8081/api/users/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updateData),
+        }
+      );
+
+      const data = await backendResponse.json();
+      console.log("Backend update user response:", data);
+
+      if (backendResponse.ok) {
+        return NextResponse.json({
+          success: true,
+          data: data,
+          message: "User updated successfully",
+        });
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            message: data.message || "Failed to update user",
+          },
+          { status: backendResponse.status }
+        );
+      }
+    } catch (backendError) {
+      console.error("Backend connection error:", backendError);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Failed to connect to backend service",
+        },
+        { status: 500 }
+      );
+    }
+  } catch (error) {
+    console.error("Error updating user:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 
-const BACKEND_URL = "http://localhost:3002/jobs/my-jobs";
+const BACKEND_URL = "http://localhost:8081/api/jobs/my-jobs";
 
 export async function GET(request: Request) {
   try {

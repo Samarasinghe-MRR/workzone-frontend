@@ -18,6 +18,16 @@ export * from "./payment";
 // Common types
 export * from "./common";
 
+// Dashboard types
+export * from "./dashboard";
+
+// Schema-aligned types (Prisma compatibility) - using namespaced exports to avoid conflicts
+export * as AuthAligned from "./authAligned";
+export * as UserAligned from "./userAligned";
+export * as JobAligned from "./jobAligned";
+export * as QuotationAligned from "./quotationAligned";
+export * as CategoryAligned from "./categoryAligned";
+
 // Legacy compatibility - these will be moved to appropriate files
 export interface AdminStats {
   totalUsers: number;

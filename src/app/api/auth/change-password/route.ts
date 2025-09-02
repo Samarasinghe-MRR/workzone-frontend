@@ -31,16 +31,55 @@ export async function PATCH(request: Request) {
     }
 
     try {
-      // Forward the request to your NestJS backend
+      // For authenticated password changes, we'll use the user service to update the password
+      // First, get the user ID from the token by calling the auth validation endpoint
+      const authResponse = await fetch(
+        "http://localhost:8081/api/auth/validate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!authResponse.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid authentication token",
+          },
+          { status: 401 }
+        );
+      }
+
+      const authData = await authResponse.json();
+      const userId = authData.user?.userId || authData.userId;
+
+      if (!userId) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Could not determine user ID",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Now update the user's password through the user service
       const backendResponse = await fetch(
-        "http://localhost:4000/auth/reset-password",
+        `http://localhost:8081/api/users/${userId}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ currentPassword, newPassword }),
+          body: JSON.stringify({
+            currentPassword,
+            password: newPassword, // The user service should validate the current password and update to new password
+          }),
         }
       );
 

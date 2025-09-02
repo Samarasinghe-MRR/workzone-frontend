@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { authApiClient } from "@/lib/api";
+import { gatewayServices } from "@/lib/gatewayApi";
 
 interface CustomerPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 interface CustomerData {
@@ -21,7 +21,7 @@ interface CustomerData {
 
 export default function CustomerPage({ params }: CustomerPageProps) {
   const router = useRouter();
-  const { id } = params;
+  const { id } = use(params); // Unwrap the Promise using React.use()
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,30 +31,34 @@ export default function CustomerPage({ params }: CustomerPageProps) {
       try {
         setLoading(true);
 
-        // First check if this is the current user's own profile
-        // If so, use /users/me for better security and caching
+        // Use the dashboard endpoint that provides comprehensive user data
+        // This matches your backend's GET /users/me/dashboard endpoint
         try {
-          const currentUserResponse = await authApiClient.get<{
-            data: CustomerData;
-          }>("/users/me", true);
-          if (currentUserResponse.data && currentUserResponse.data.id === id) {
-            setCustomerData(currentUserResponse.data);
+          const dashboardResponse =
+            await gatewayServices.users.get<CustomerData>(
+              "/me/dashboard",
+              true
+            );
+
+          if (dashboardResponse) {
+            setCustomerData(dashboardResponse);
             return;
           }
-        } catch {
+        } catch (dashboardError) {
           console.log(
-            "Could not fetch current user, proceeding with ID-based fetch"
+            "Dashboard endpoint failed, trying customer-data endpoint:",
+            dashboardError
           );
         }
 
-        // Fetch customer-specific data using the ID
-        const response = await authApiClient.get<{ data: CustomerData }>(
-          `/users/${id}`,
+        // Fallback: Use the comprehensive customer data endpoint
+        const response = await gatewayServices.users.get<CustomerData>(
+          `/${id}/customer-data`,
           true
         );
 
-        if (response.data) {
-          setCustomerData(response.data);
+        if (response) {
+          setCustomerData(response);
         }
       } catch (err) {
         console.error("Error fetching customer data:", err);

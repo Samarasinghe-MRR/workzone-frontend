@@ -3,7 +3,7 @@ import { User } from "@/types";
 import { authService } from "@/features/auth/services/authService";
 import { userService } from "@/features/user/services/userService";
 
-// Auth hook integrated with backend
+// Fixed Auth hook - removed the getCurrentUser call that was causing 404s
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,34 +13,62 @@ export function useAuth() {
     const checkAuth = async () => {
       try {
         if (authService.isAuthenticated()) {
-          // Try to get current user from auth service first
-          try {
-            const response = await authService.getCurrentUser();
-            if (response.data) {
-              // Extract User data from AuthUser
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { token, refreshToken, ...userData } = response.data;
-              setUser(userData);
-            }
-          } catch {
-            // Fallback to token decode method
-            const token = authService.getToken();
-            if (token) {
-              try {
-                const payload = JSON.parse(atob(token.split(".")[1]));
-                const userId = payload.sub || payload.userId;
+          // Skip getCurrentUser since /auth/me doesn't exist - use token decode instead
+          const token = authService.getToken();
+          if (token) {
+            try {
+              const payload = JSON.parse(atob(token.split(".")[1]));
+              const userId = payload.sub || payload.userId;
+              const userRole = payload.role;
 
-                if (userId) {
-                  // Fetch user data from backend
+              if (userId) {
+                // Try to get user details from user service
+                try {
                   const response = await userService.getUserById(userId);
                   if (response.data) {
-                    setUser(response.data);
+                    // Ensure required fields are present
+                    setUser({
+                      ...response.data,
+                      name: response.data.name || response.data.email || "",
+                      email: response.data.email || "",
+                      status:
+                        String(response.data.status) === "ACTIVE"
+                          ? ("Active" as const)
+                          : ("Inactive" as const),
+                      role:
+                        String(response.data.role) === "CUSTOMER"
+                          ? ("customer" as const)
+                          : String(response.data.role) === "SERVICE_PROVIDER"
+                          ? ("provider" as const)
+                          : String(response.data.role) === "ADMIN"
+                          ? ("admin" as const)
+                          : ("customer" as const),
+                    });
                   }
+                } catch (userError) {
+                  console.error("Failed to get user details:", userError);
+                  // Fallback to token data if user service fails
+                  setUser({
+                    id: userId,
+                    email: payload.email || "",
+                    name: payload.email || "User",
+                    status: "Active" as const,
+                    role:
+                      userRole === "CUSTOMER"
+                        ? ("customer" as const)
+                        : userRole === "SERVICE_PROVIDER"
+                        ? ("provider" as const)
+                        : userRole === "ADMIN"
+                        ? ("admin" as const)
+                        : ("customer" as const),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  });
                 }
-              } catch (decodeError) {
-                console.error("Token decode error:", decodeError);
-                authService.clearAuth();
               }
+            } catch (decodeError) {
+              console.error("Token decode error:", decodeError);
+              authService.clearAuth();
             }
           }
         }
@@ -61,9 +89,26 @@ export function useAuth() {
       const response = await authService.login({ email, password });
       if (response.data) {
         // Extract User data from AuthUser
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { token, refreshToken, ...userData } = response.data;
-        setUser(userData);
+        const userData = response.data;
+        setUser({
+          id: userData.id,
+          email: userData.email || "",
+          name: userData.name || userData.email || "",
+          status:
+            String(userData.status) === "ACTIVE"
+              ? ("Active" as const)
+              : ("Inactive" as const),
+          role:
+            String(userData.role) === "CUSTOMER"
+              ? ("customer" as const)
+              : String(userData.role) === "SERVICE_PROVIDER"
+              ? ("provider" as const)
+              : String(userData.role) === "ADMIN"
+              ? ("admin" as const)
+              : ("customer" as const),
+          createdAt: userData.createdAt,
+          updatedAt: userData.updatedAt,
+        });
       }
       return response;
     } catch (error) {
@@ -92,12 +137,34 @@ export function useAuth() {
     try {
       const response = await authService.refreshToken();
       if (response.data) {
-        // Token was refreshed, get current user
-        const userResponse = await authService.getCurrentUser();
-        if (userResponse.data) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { token, refreshToken, ...userData } = userResponse.data;
-          setUser(userData);
+        // Token was refreshed, decode new token
+        const token = authService.getToken();
+        if (token) {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          const userId = payload.sub || payload.userId;
+
+          if (userId) {
+            const userResponse = await userService.getUserById(userId);
+            if (userResponse.data) {
+              setUser({
+                ...userResponse.data,
+                name: userResponse.data.name || userResponse.data.email || "",
+                email: userResponse.data.email || "",
+                status:
+                  String(userResponse.data.status) === "ACTIVE"
+                    ? ("Active" as const)
+                    : ("Inactive" as const),
+                role:
+                  String(userResponse.data.role) === "CUSTOMER"
+                    ? ("customer" as const)
+                    : String(userResponse.data.role) === "SERVICE_PROVIDER"
+                    ? ("provider" as const)
+                    : String(userResponse.data.role) === "ADMIN"
+                    ? ("admin" as const)
+                    : ("customer" as const),
+              });
+            }
+          }
         }
       }
       return response;

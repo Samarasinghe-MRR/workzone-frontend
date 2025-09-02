@@ -50,12 +50,15 @@ export async function POST(request: Request) {
 
     console.log("Sending to backend:", backendData);
 
-    // Forward the request to your NestJS backend
-    const backendResponse = await fetch("http://localhost:4000/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(backendData),
-    });
+    // Forward the request to API Gateway instead of direct service call
+    const backendResponse = await fetch(
+      "http://localhost:8081/api/auth/register",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(backendData),
+      }
+    );
 
     const data = await backendResponse.json();
     console.log("Backend response:", data);

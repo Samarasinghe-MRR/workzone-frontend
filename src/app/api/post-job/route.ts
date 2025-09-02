@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 
-const BACKEND_URL = "http://localhost:3002/jobs";
+// Use API Gateway URL instead of direct service URL
+const API_GATEWAY_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:8081/api";
+const BACKEND_URL = `${API_GATEWAY_URL}/jobs`;
 
 export async function POST(request: Request) {
   try {
@@ -19,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    console.log("Creating new job posting with data:", body);
+    console.log("Creating new job posting via API Gateway:", body);
 
     // Validate required fields
     if (!body.title || !body.description || !body.category) {
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
     });
 
     const data = await response.json();
-    console.log("Backend post job response:", data);
+    console.log("API Gateway job creation response:", data);
 
     if (response.ok) {
       return NextResponse.json({

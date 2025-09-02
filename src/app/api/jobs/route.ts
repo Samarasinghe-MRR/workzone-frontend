@@ -1,27 +1,34 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 
-const BACKEND_URL = "http://localhost:3002/jobs";
+// Use API Gateway URL instead of direct service URL
+const API_GATEWAY_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:8081/api";
+const BACKEND_URL = `${API_GATEWAY_URL}/jobs`;
 
 export async function GET(request: Request) {
   try {
+    const headersList = await headers();
+    const authorization = headersList.get("authorization");
+
     const { searchParams } = new URL(request.url);
 
     // Build query string from search parameters
     const queryString = searchParams.toString();
     const url = queryString ? `${BACKEND_URL}?${queryString}` : BACKEND_URL;
 
-    console.log("Fetching jobs from backend:", url);
+    console.log("Fetching jobs from API Gateway:", url);
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        ...(authorization && { Authorization: authorization }),
       },
     });
 
     const data = await response.json();
-    console.log("Backend jobs response:", data);
+    console.log("API Gateway jobs response:", data);
 
     if (response.ok) {
       return NextResponse.json({
