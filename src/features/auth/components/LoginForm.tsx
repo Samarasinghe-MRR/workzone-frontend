@@ -1,100 +1,9 @@
-// "use client";
-
-// import { useState } from "react";
-// import { useLogin } from "../hooks/useLogin";
-// import { LoginFormValues } from "../schema/loginSchema";
-
-// export default function LoginForm() {
-//   const {
-//     register,
-//     handleSubmit,
-//     formState: { errors },
-//   } = useLogin()
-
-//   const [loading, setLoading] = useState(false);
-//   const [apiError, setApiError] = useState<string | null>(null);
-
-//   const onSubmit = async (data: LoginFormValues) => {
-//     setLoading(true);
-//     setApiError(null);
-//     try {
-//       const response = await fetch("/api/auth/login", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify(data),
-//       });
-
-//       if (!response.ok) {
-//         const errorData = await response.json();
-//         setApiError(errorData.message || "Login failed");
-//         setLoading(false);
-//         return;
-//       }
-
-//       // Success: handle login (save token, redirect, etc.)
-//       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//       const result = await response.json();
-//       // Example: localStorage.setItem("token", result.token);
-//       alert("Login successful!");
-//       // Redirect or update UI as needed
-//     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//     } catch (error) {
-//       setApiError("Network error. Please try again.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <form
-//       onSubmit={handleSubmit(onSubmit)}
-//       className="space-y-6 max-w-sm mx-auto p-8 rounded-lg shadow bg-emerald-50"
-//     >
-//       <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Login</h2>
-//       {apiError && (
-//         <p className="text-red-600 text-center font-medium">{apiError}</p>
-//       )}
-//       <div>
-//         <label className="block mb-1 text-gray-900 font-medium">Email</label>
-//         <input
-//           type="email"
-//           {...register("email")}
-//           className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-emerald-600 text-gray-900 bg-white"
-//         />
-//         {errors.email && (
-//           <p className="text-red-600 mt-1 text-sm">{errors.email.message}</p>
-//         )}
-//       </div>
-//       <div>
-//         <label className="block mb-1 text-gray-900 font-medium">Password</label>
-//         <input
-//           type="password"
-//           {...register("password")}
-//           className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-emerald-600 text-gray-900 bg-white"
-//         />
-//         {errors.password && (
-//           <p className="text-red-600 mt-1 text-sm">{errors.password.message}</p>
-//         )}
-//       </div>
-//       <button
-//         type="submit"
-//         disabled={loading}
-//         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded transition-colors disabled:opacity-60"
-//       >
-//         {loading ? "Logging in..." : "Login"}
-//       </button>
-//     </form>
-//   );
-// }
-
 "use client";
 
-import { useState, useRef } from "react";
-import Image from "next/image";
-import { useLogin } from "../hooks/useLogin";
-import { LoginFormValues } from "../schema/loginSchema";
-
-// shadcn/ui components
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Card,
   CardHeader,
@@ -103,169 +12,196 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-// carousel
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
-import { FcGoogle } from "react-icons/fc";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { loginSchema, LoginFormValues } from "../schema/loginSchema";
+import { authService } from "../services/authService";
+import Link from "next/link";
 
 export default function LoginForm() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useLogin();
-
-  const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-
-  const autoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     setApiError(null);
+
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      console.log("Form data being submitted:", data); // Debug log
+      const response = await authService.login(data);
+      console.log("Auth service response:", response); // Debug log
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        setApiError(errorData.message || "Login failed");
-        setLoading(false);
-        return;
+      if (response.success && response.data) {
+        // Redirect based on user role using dynamic routes
+        const userRole: string = response.data.role;
+        const userId = response.data.id;
+
+        console.log("Login successful, redirecting user:", {
+          userId,
+          role: userRole,
+        }); // Debug log
+
+        // Convert backend role format to frontend routing format
+        switch (userRole) {
+          case "ADMIN":
+            console.log("Redirecting to admin dashboard");
+            router.push(`/dashboard/admin/${userId}`);
+            break;
+          case "CUSTOMER":
+            console.log("Redirecting to customer dashboard");
+            router.push(`/dashboard/customer/${userId}`);
+            break;
+          case "SERVICE_PROVIDER":
+            console.log("Redirecting to provider dashboard");
+            router.push(`/dashboard/provider/${userId}`);
+            break;
+          default:
+            console.log("Using fallback redirect logic for role:", userRole);
+            // Fallback to static route based on role
+            const roleString = String(userRole).toLowerCase();
+            if (roleString.includes("customer")) {
+              router.push("/dashboard/customer");
+            } else if (
+              roleString.includes("provider") ||
+              roleString.includes("service")
+            ) {
+              router.push("/dashboard/provider");
+            } else {
+              router.push("/dashboard/customer"); // Default fallback
+            }
+        }
+      } else {
+        console.error("Login response missing success or data:", response);
+        setApiError("Login failed: Invalid response from server");
       }
-
-      await response.json();
-      alert("Login successful!");
-      // e.g. localStorage.setItem("token", result.token);
-      // redirect as needed
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      setApiError("Network error. Please try again.");
+    } catch (error) {
+      console.error("Login error:", error);
+      setApiError(error instanceof Error ? error.message : "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
-    // Example: http://localhost:3001/auth/google
-  };
-
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-gray-50 dark:bg-gray-900">
-      {/* Left carousel */}
-      <div className="hidden md:flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-        <Carousel plugins={[autoplay.current]} className="w-full h-full">
-          <CarouselContent>
-            {[
-              "/carousal/slide1.webp",
-              "/carousal/slide2.webp",
-              "/carousal/slide3.webp",
-            ].map((src, idx) => (
-              <CarouselItem
-                key={idx}
-                className="flex items-center justify-center"
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            Welcome Back
+          </CardTitle>
+          <p className="text-sm text-gray-600 text-center">
+            Sign in to your WorkZone account
+          </p>
+        </CardHeader>
+
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                {...register("email")}
+                className={errors.email ? "border-red-500" : ""}
+              />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                {...register("password")}
+                className={errors.password ? "border-red-500" : ""}
+              />
+              {errors.password && (
+                <p className="text-sm text-red-600">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex justify-end">
+              <Link
+                href="/auth/forgotPassword"
+                className="text-sm text-emerald-600 hover:text-emerald-700"
               >
-                <Image
-                  src={src}
-                  alt={`Slide ${idx + 1}`}
-                  width={1920}
-                  height={1280}
-                  className="w-full h-screen object-cover"
-                />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-      </div>
+                Forgot password?
+              </Link>
+            </div>
 
-      {/* Right login card */}
-      <div className="flex justify-center items-center p-6">
-        <Card className="w-full max-w-md shadow-lg rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl font-bold">
-              Login
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent>
+            {/* Error Message */}
             {apiError && (
-              <p className="text-red-600 text-center font-medium">{apiError}</p>
+              <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-md text-sm">
+                {apiError}
+              </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email */}
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  {...register("email")}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 dark:bg-gray-700 dark:text-white"
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
-              </div>
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+        </CardContent>
 
-              {/* Password */}
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-600 text-gray-900 dark:bg-gray-700 dark:text-white"
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-600">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+        <CardFooter className="flex flex-col space-y-2">
+          <div className="text-sm text-center text-gray-600">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/auth/signup"
+              className="text-emerald-600 hover:text-emerald-700 font-medium"
+            >
+              Sign up
+            </Link>
+          </div>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-600 hover:bg-emerald-700"
-              >
-                {loading ? "Logging in..." : "Login"}
-              </Button>
-              <Button
-                onClick={handleGoogleLogin}
-                className="w-full flex items-center gap-2"
-                variant="outline"
-              >
-                <FcGoogle className="text-xl" /> Continue with Google
-              </Button>
-            </form>
-          </CardContent>
+          {/* Quick signup links */}
+          <div className="flex justify-center space-x-4 text-xs text-gray-500">
+            <Link
+              href="/auth/signup?type=customer"
+              className="hover:text-emerald-600"
+            >
+              Customer Signup
+            </Link>
+            <span>|</span>
+            <Link
+              href="/auth/signup?type=provider"
+              className="hover:text-emerald-600"
+            >
+              Provider Signup
+            </Link>
+          </div>
 
-          <CardFooter className="flex justify-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don’t have an account?{" "}
-              <a
-                href="/auth/signup"
-                className="text-emerald-700 hover:underline dark:text-emerald-400"
-              >
-                Sign up
-              </a>
+          {/* Admin Note */}
+          <div className="text-xs text-center text-gray-500 mt-4 pt-4 border-t">
+            <p>
+              <strong>Admin Access:</strong> Admin accounts are created
+              manually. Contact system administrator for admin credentials.
             </p>
-          </CardFooter>
-        </Card>
-      </div>
+          </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

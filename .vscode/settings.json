@@ -1,0 +1,9 @@
+{
+  "workbench.startupEditor": "readme",
+  "files.associations": {
+    "*.md": "markdown"
+  },
+  "markdown.preview.doubleClickToSwitchToEditor": false,
+  "workbench.editor.pinnedTabSizing": "compact",
+  "workbench.editor.enablePreview": false
+}

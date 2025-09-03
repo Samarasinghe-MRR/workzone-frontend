@@ -1,17 +1,25 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import GuestNavbar from "./guestNavbar";
-import AuthenticatedNavbar from "./authenticatedNavbar";
 
 export default function ConditionalNavbar() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
 
-  // Check if user is on account pages or other authenticated routes
-  const isAuthenticated =
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/my-tasks") ||
-    pathname.startsWith("/book-task");
+  // Ensure this only renders on the client to avoid hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return isAuthenticated ? <AuthenticatedNavbar /> : <GuestNavbar />;
+  // Don't render anything until mounted on client
+  if (!mounted) {
+    return null;
+  }
+
+  // Show navbar only on homepage, remove from all other pages including dashboard/auth
+  const showNavbar = pathname === "/";
+
+  return showNavbar ? <GuestNavbar /> : null;
 }

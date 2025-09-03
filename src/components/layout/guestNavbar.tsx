@@ -58,7 +58,8 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/providers", label: "Services" },
-    { href: "/profile", label: "Become a Professional" },
+    // Updated to redirect to provider signup instead of profile
+    { href: "/auth/signup?type=provider", label: "Become a Professional" },
   ];
 
   return (
@@ -96,7 +97,7 @@ export default function Navbar() {
           asChild
           className="bg-emerald-600 hover:bg-emerald-700 text-lg px-5"
         >
-          <Link href="../auth/login">Login</Link>
+          <Link href="/auth/login">Login</Link>
         </Button>
       </div>
     </nav>

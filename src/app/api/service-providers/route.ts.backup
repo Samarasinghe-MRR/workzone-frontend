@@ -1,0 +1,567 @@
+import { NextResponse } from "next/server";
+import type { GetServiceProvidersParams } from "@/types/serviceProviders";
+
+// Helper function to get mock data
+function getMockProviders() {
+  return [
+    {
+      id: "sp-1",
+      userId: "user-1",
+      businessName: "Pro Services LLC",
+      category: "Electrical",
+      experienceYears: 10,
+      location: "123 Business St, New York, NY",
+      latitude: 40.7128,
+      longitude: -74.006,
+      serviceRadius: 25,
+      averageResponseTime: 2,
+      rating: 4.8,
+      availability: true,
+      isAvailable: true,
+      createdAt: "2020-08-01T00:00:00Z",
+      user: {
+        firstName: "Alex",
+        lastName: "Johnson",
+        email: "alex@example.com",
+        phone: "+1-555-0123",
+        isVerified: true,
+      },
+      completedJobs: 127,
+      hourlyRate: 85,
+      specializations: [
+        {
+          id: "spec-1",
+          providerId: "sp-1",
+          categoryId: "electrical",
+          isActive: true,
+          category: {
+            id: "electrical",
+            name: "Electrical Work",
+            description: "Professional electrical services",
+          },
+        },
+      ],
+    },
+    {
+      id: "sp-2",
+      userId: "user-2",
+      businessName: "Clean Pro Services",
+      category: "Cleaning",
+      experienceYears: 5,
+      location: "456 Service Ave, New York, NY",
+      latitude: 40.7589,
+      longitude: -73.9851,
+      serviceRadius: 20,
+      averageResponseTime: 1,
+      rating: 4.9,
+      availability: true,
+      isAvailable: true,
+      createdAt: "2021-03-15T00:00:00Z",
+      user: {
+        firstName: "Sarah",
+        lastName: "Williams",
+        email: "sarah@example.com",
+        phone: "+1-555-0124",
+        isVerified: true,
+      },
+      completedJobs: 89,
+      hourlyRate: 35,
+      specializations: [
+        {
+          id: "spec-2",
+          providerId: "sp-2",
+          categoryId: "cleaning",
+          isActive: true,
+          category: {
+            id: "cleaning",
+            name: "House Cleaning",
+            description: "Professional cleaning services",
+          },
+        },
+      ],
+    },
+    {
+      id: "sp-3",
+      userId: "user-3",
+      businessName: "Fix It Fast",
+      category: "Plumbing",
+      experienceYears: 8,
+      location: "789 Repair Rd, New York, NY",
+      latitude: 40.7311,
+      longitude: -73.996,
+      serviceRadius: 30,
+      averageResponseTime: 3,
+      rating: 4.6,
+      availability: true,
+      isAvailable: true,
+      createdAt: "2019-07-20T00:00:00Z",
+      user: {
+        firstName: "Mike",
+        lastName: "Davis",
+        email: "mike@example.com",
+        phone: "+1-555-0125",
+        isVerified: true,
+      },
+      completedJobs: 156,
+      hourlyRate: 75,
+      specializations: [
+        {
+          id: "spec-3",
+          providerId: "sp-3",
+          categoryId: "plumbing",
+          isActive: true,
+          category: {
+            id: "plumbing",
+            name: "Plumbing Services",
+            description: "Professional plumbing repairs and installations",
+          },
+        },
+      ],
+    },
+    {
+      id: "sp-4",
+      userId: "user-4",
+      businessName: "Garden Masters",
+      category: "Gardening",
+      experienceYears: 12,
+      location: "321 Green St, New York, NY",
+      latitude: 40.7505,
+      longitude: -73.9934,
+      serviceRadius: 15,
+      averageResponseTime: 4,
+      rating: 4.7,
+      availability: true,
+      isAvailable: true,
+      createdAt: "2018-04-10T00:00:00Z",
+      user: {
+        firstName: "Lisa",
+        lastName: "Green",
+        email: "lisa@example.com",
+        phone: "+1-555-0126",
+        isVerified: true,
+      },
+      completedJobs: 203,
+      hourlyRate: 45,
+      specializations: [
+        {
+          id: "spec-4",
+          providerId: "sp-4",
+          categoryId: "gardening",
+          isActive: true,
+          category: {
+            id: "gardening",
+            name: "Landscaping & Gardening",
+            description: "Professional landscaping and garden maintenance",
+          },
+        },
+      ],
+    },
+  ];
+}
+
+export async function GET(request: Request) {
+  try {
+    console.log("Service providers API called");
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    const { searchParams } = new URL(request.url);
+
+    console.log("Get service providers request received");
+    console.log("Token present:", !!token);
+    console.log("Token length:", token?.length || 0);
+
+    // Extract query parameters
+    const sortByParam = searchParams.get("sortBy") as
+      | "rating"
+      | "distance"
+      | "price"
+      | "experience";
+
+    // Map frontend sortBy to backend sortBy
+    let backendSortBy: "rating" | "experienceYears" | "createdAt" = "rating";
+    switch (sortByParam) {
+      case "rating":
+        backendSortBy = "rating";
+        break;
+      case "experience":
+        backendSortBy = "experienceYears";
+        break;
+      case "distance":
+      case "price":
+      default:
+        backendSortBy = "rating"; // Default fallback
+        break;
+    }
+
+    const params: GetServiceProvidersParams = {
+      category: searchParams.get("category") || undefined,
+      location: searchParams.get("location") || undefined,
+      latitude: searchParams.get("latitude")
+        ? parseFloat(searchParams.get("latitude")!)
+        : undefined,
+      longitude: searchParams.get("longitude")
+        ? parseFloat(searchParams.get("longitude")!)
+        : undefined,
+      radius: searchParams.get("radius")
+        ? parseFloat(searchParams.get("radius")!)
+        : undefined,
+      minRating: searchParams.get("minRating")
+        ? parseFloat(searchParams.get("minRating")!)
+        : undefined,
+      maxPrice: searchParams.get("maxPrice")
+        ? parseFloat(searchParams.get("maxPrice")!)
+        : undefined,
+      availability: searchParams.get("availability")
+        ? searchParams.get("availability") === "true"
+        : undefined,
+      search: searchParams.get("search") || undefined,
+      page: searchParams.get("page") ? parseInt(searchParams.get("page")!) : 1,
+      limit: searchParams.get("limit")
+        ? parseInt(searchParams.get("limit")!)
+        : 20,
+      sortBy: sortByParam,
+      sortOrder: (searchParams.get("sortOrder") as "asc" | "desc") || "desc",
+    };
+
+    console.log("Service providers query params:", params);
+
+    try {
+      // Build query string for backend - map frontend params to backend params
+      const backendParams = {
+        category: params.category,
+        location: params.location,
+        latitude: params.latitude,
+        longitude: params.longitude,
+        radius: params.radius,
+        minRating: params.minRating,
+        maxPrice: params.maxPrice,
+        availability: params.availability,
+        search: params.search,
+        page: params.page,
+        limit: params.limit,
+        sortBy: backendSortBy, // Use the mapped sortBy
+        sortOrder: params.sortOrder,
+      };
+
+      const queryString = new URLSearchParams();
+      Object.entries(backendParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryString.append(key, value.toString());
+        }
+      });
+
+      // Forward the request to API Gateway - correct endpoint for user service
+      const backendResponse = await fetch(
+        `http://localhost:8081/api/users/service-providers?${queryString.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
+      );
+
+      const data = await backendResponse.json();
+      console.log("Backend service providers response:", data);
+
+      if (backendResponse.ok) {
+        // Backend returns the result directly (with data, total, hasMore, etc.)
+        return NextResponse.json({
+          success: true,
+          data: {
+            providers: data.data || [],
+            total: data.total || 0,
+            hasMore: data.hasMore || false,
+            page: data.page || 1,
+            limit: data.limit || 20,
+          },
+          message: "Service providers fetched successfully",
+        });
+      } else {
+        console.log("Backend returned error:", data.message);
+
+                return NextResponse.json(
+          {
+            success: false,
+            data: null,
+            message: data.message || "Backend error",
+            error: data,
+          },
+          { status: backendResponse.status }
+        );
+      }
+    } catch (fetchError) {
+      console.error("Failed to connect to backend:", fetchError);
+      
+      // Return mock data when backend is not available
+      const mockProviders = getMockProviders();
+      return NextResponse.json({
+        success: true,
+        data: {
+          providers: mockProviders,
+          total: mockProviders.length,
+          hasMore: false,
+          page: 1,
+          limit: 20,
+        },
+        message: "Backend unavailable, using mock data",
+        backendError: fetchError instanceof Error ? fetchError.message : "Unknown error",
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching service providers:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+                    id: "cat-1",
+                    name: "Electrical",
+                    description: "Electrical services",
+                  },
+                },
+              ],
+              completedJobs: 127,
+              hourlyRate: 85,
+            },
+            {
+              id: "sp-2",
+              userId: "user-2",
+              businessName: "Clean Pro Services",
+              category: "Cleaning",
+              experienceYears: 5,
+              location: "456 Service Ave, New York, NY",
+              latitude: 40.7589,
+              longitude: -73.9851,
+              serviceRadius: 20,
+              averageResponseTime: 1,
+              rating: 4.9,
+              availability: true,
+              isAvailable: true,
+              createdAt: "2021-03-15T00:00:00Z",
+              user: {
+                firstName: "Sarah",
+                lastName: "Williams",
+                email: "sarah@example.com",
+                phone: "+1-555-0124",
+                isVerified: true,
+              },
+              specializations: [
+                {
+                  id: "spec-2",
+                  providerId: "sp-2",
+                  categoryId: "cat-2",
+                  isActive: true,
+                  category: {
+                    id: "cat-2",
+                    name: "Cleaning",
+                    description: "Cleaning services",
+                  },
+                },
+              ],
+              completedJobs: 89,
+              hourlyRate: 35,
+            },
+            {
+              id: "sp-3",
+              userId: "user-3",
+              businessName: "Fix It Fast Plumbing",
+              category: "Plumbing",
+              experienceYears: 15,
+              location: "789 Repair Rd, New York, NY",
+              latitude: 40.7282,
+              longitude: -74.0776,
+              serviceRadius: 30,
+              averageResponseTime: 1,
+              rating: 4.7,
+              availability: true,
+              isAvailable: false,
+              createdAt: "2019-06-20T00:00:00Z",
+              user: {
+                firstName: "Mike",
+                lastName: "Chen",
+                email: "mike@example.com",
+                phone: "+1-555-0125",
+                isVerified: true,
+              },
+              specializations: [
+                {
+                  id: "spec-3",
+                  providerId: "sp-3",
+                  categoryId: "cat-3",
+                  isActive: true,
+                  category: {
+                    id: "cat-3",
+                    name: "Plumbing",
+                    description: "Plumbing services",
+                  },
+                },
+              ],
+              completedJobs: 203,
+              hourlyRate: 75,
+            },
+          ];
+
+          // Apply filters to mock data
+          let filteredProviders = mockProviders;
+
+          if (params.category && params.category !== "All Categories") {
+            filteredProviders = filteredProviders.filter(
+              (p) => p.category.toLowerCase() === params.category!.toLowerCase()
+            );
+          }
+
+          if (params.search) {
+            const searchLower = params.search.toLowerCase();
+            filteredProviders = filteredProviders.filter(
+              (p) =>
+                p.businessName?.toLowerCase().includes(searchLower) ||
+                p.category.toLowerCase().includes(searchLower) ||
+                p.user?.firstName.toLowerCase().includes(searchLower) ||
+                p.user?.lastName.toLowerCase().includes(searchLower)
+            );
+          }
+
+          if (params.availability) {
+            filteredProviders = filteredProviders.filter((p) => p.isAvailable);
+          }
+
+          if (params.minRating) {
+            filteredProviders = filteredProviders.filter(
+              (p) => p.rating >= params.minRating!
+            );
+          }
+
+          // Apply sorting
+          if (params.sortBy === "rating") {
+            filteredProviders.sort((a, b) =>
+              params.sortOrder === "desc"
+                ? b.rating - a.rating
+                : a.rating - b.rating
+            );
+          } else if (params.sortBy === "experience") {
+            filteredProviders.sort((a, b) =>
+              params.sortOrder === "desc"
+                ? b.experienceYears - a.experienceYears
+                : a.experienceYears - b.experienceYears
+            );
+          } else if (params.sortBy === "price") {
+            filteredProviders.sort((a, b) => {
+              const priceA = a.hourlyRate || 0;
+              const priceB = b.hourlyRate || 0;
+              return params.sortOrder === "desc"
+                ? priceB - priceA
+                : priceA - priceB;
+            });
+          }
+
+          // Apply pagination
+          const startIndex = (params.page! - 1) * params.limit!;
+          const endIndex = startIndex + params.limit!;
+          const paginatedProviders = filteredProviders.slice(
+            startIndex,
+            endIndex
+          );
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              providers: paginatedProviders,
+              total: filteredProviders.length,
+              page: params.page!,
+              limit: params.limit!,
+              totalPages: Math.ceil(filteredProviders.length / params.limit!),
+            },
+            message: "Service providers fetched successfully (mock data)",
+          });
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: data.message || "Failed to fetch service providers",
+          },
+          { status: backendResponse.status }
+        );
+      }
+    } catch (backendError) {
+      console.error("Backend connection error:", backendError);
+
+      // Return mock data for development if backend is not available
+      console.log("Backend unavailable, returning mock data for development");
+
+      const mockProviders = [
+        {
+          id: "sp-1",
+          userId: "user-1",
+          businessName: "Pro Services LLC",
+          category: "Electrical",
+          experienceYears: 10,
+          location: "123 Business St, New York, NY",
+          latitude: 40.7128,
+          longitude: -74.006,
+          serviceRadius: 25,
+          averageResponseTime: 2,
+          rating: 4.8,
+          availability: true,
+          isAvailable: true,
+          createdAt: "2020-08-01T00:00:00Z",
+          user: {
+            firstName: "Alex",
+            lastName: "Johnson",
+            email: "alex@example.com",
+            phone: "+1-555-0123",
+            isVerified: true,
+          },
+          completedJobs: 127,
+          hourlyRate: 85,
+        },
+        {
+          id: "sp-2",
+          userId: "user-2",
+          businessName: "Clean Pro Services",
+          category: "Cleaning",
+          experienceYears: 5,
+          location: "456 Service Ave, New York, NY",
+          latitude: 40.7589,
+          longitude: -73.9851,
+          serviceRadius: 20,
+          averageResponseTime: 1,
+          rating: 4.9,
+          availability: true,
+          isAvailable: true,
+          createdAt: "2021-03-15T00:00:00Z",
+          user: {
+            firstName: "Sarah",
+            lastName: "Williams",
+            email: "sarah@example.com",
+            phone: "+1-555-0124",
+            isVerified: true,
+          },
+          completedJobs: 89,
+          hourlyRate: 35,
+        },
+      ];
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          providers: mockProviders,
+          total: mockProviders.length,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+        },
+        message: "Service providers fetched successfully (mock data)",
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching service providers:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
